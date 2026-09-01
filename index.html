@@ -1966,9 +1966,9 @@ function drawBudgetToCanvas() {
 
     /* Funcao que desenha um item (dot + texto) e retorna a altura total usada */
     function drawFeatItem(text, fx, startY, highlight, maxW) {
-      const itemFont  = highlight ? font(11, '700') : FEAT_FONT;
+      const itemFont  = highlight ? font(10, '600') : FEAT_FONT;
       const itemColor = highlight ? ORANGE : FEAT_COLOR;
-      const dotR      = highlight ? 5 * S : FEAT_DOT_R;
+      const dotR      = FEAT_DOT_R;
       const useW      = maxW || colFeatW;
 
       const lines  = wrapText(text, useW - FEAT_TEXT_OFF - 4 * S, itemFont);
