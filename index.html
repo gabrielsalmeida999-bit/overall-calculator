@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2044,17 +2044,42 @@ function generateImage() {
 
 function downloadImage() {
   const btn = event?.target;
+  const originalLabel = '⬇  Baixar Imagem PNG (Alta Qualidade)';
   if (btn) { btn.textContent = '⏳  Gerando…'; btn.disabled = true; }
 
+  const reset = () => { if (btn) { btn.textContent = originalLabel; btn.disabled = false; } };
+
   drawBudgetToCanvas().then(canvas => {
-    const a = document.createElement('a');
-    a.download = `orcamento-overall-${Date.now()}.png`;
-    a.href     = canvas.toDataURL('image/png', 1.0);
-    a.click();
-    if (btn) { btn.textContent = '⬇ \u00a0Baixar Imagem PNG (Alta Qualidade)'; btn.disabled = false; }
+    const filename = `orcamento-overall-${Date.now()}.png`;
+
+    canvas.toBlob(blob => {
+      if (!blob) { reset(); return; }
+
+      // iOS / Android: usa Web Share API — abre planilha nativa (Salvar em Fotos, WhatsApp etc.)
+      if (navigator.canShare) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'Orçamento Overall.' })
+            .then(reset).catch(reset);
+          return;
+        }
+      }
+
+      // Desktop: download via blob URL
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.download = filename;
+      a.href     = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      reset();
+    }, 'image/png');
+
   }).catch(err => {
     console.error(err);
-    if (btn) { btn.textContent = '⬇ \u00a0Baixar Imagem PNG (Alta Qualidade)'; btn.disabled = false; }
+    reset();
     alert('Erro ao gerar imagem. Tente novamente.');
   });
 }
