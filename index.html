@@ -1627,11 +1627,9 @@ function renderBudgetCanvas() {
   // ── features (2 colunas) ──
   const featHTML = `<div style="${S.featGrid}">${
     getFeatures().map(f => {
-      const dotStyle = f.highlight
-        ? 'width:8px;height:8px;border-radius:50%;background:#FF7300;flex-shrink:0;margin-top:3px;min-width:8px'
-        : S.featDot;
+      const dotStyle = S.featDot;
       const txtStyle = f.highlight
-        ? 'font-size:13px;font-weight:700;color:#FF7300;line-height:1.4'
+        ? 'font-size:11px;font-weight:600;color:#FF7300;line-height:1.4'
         : S.featTxt;
       return `<div style="${S.featRow}"><div style="${dotStyle}"></div><div style="${txtStyle}">${f.text}</div></div>`;
     }).join('')
