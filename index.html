@@ -1700,7 +1700,7 @@ function drawBudgetToCanvas() {
     const taxH = document.getElementById('tax-toggle')?.checked;
     if (items.length === 1) {
       const it = items[0];
-      if (it.name)   productH += 24 * S;
+      if (it.name)   productH += 30 * S;
       productH += taxH ? 26 * S : 20 * S; // condição do aparelho
       productH += H_DIVIDER;
       if (it.avista > 0) productH += 80 * S;
@@ -1800,8 +1800,8 @@ function drawBudgetToCanvas() {
 
       // Device name
       if (it.name) {
-        textLine(it.name, W / 2, y + 14 * S, font(12, '400'), DIM, 'center', colW);
-        y += 24 * S;
+        textLine(it.name, W / 2, y + 16 * S, font(16, '600'), WHITE, 'center', colW);
+        y += 30 * S;
       }
 
       // Condição do aparelho (abaixo do nome, acima do divider)
@@ -1965,12 +1965,13 @@ function drawBudgetToCanvas() {
     }
 
     /* Funcao que desenha um item (dot + texto) e retorna a altura total usada */
-    function drawFeatItem(text, fx, startY, highlight) {
+    function drawFeatItem(text, fx, startY, highlight, maxW) {
       const itemFont  = highlight ? font(11, '700') : FEAT_FONT;
       const itemColor = highlight ? ORANGE : FEAT_COLOR;
       const dotR      = highlight ? 5 * S : FEAT_DOT_R;
+      const useW      = maxW || colFeatW;
 
-      const lines  = wrapText(text, colFeatW - FEAT_TEXT_OFF - 4 * S, itemFont);
+      const lines  = wrapText(text, useW - FEAT_TEXT_OFF - 4 * S, itemFont);
       const itemH  = lines.length * FEAT_LINE_H + (lines.length - 1) * 2 * S;
 
       // Dot
@@ -1998,10 +1999,16 @@ function drawBudgetToCanvas() {
       const fLeft  = FEATURES[i];
       const fRight = FEATURES[i + 1] || null;
 
-      const hLeft  = drawFeatItem(fLeft.text, colLeft, y, fLeft.highlight);
-      const hRight = fRight ? drawFeatItem(fRight.text, colRight, y, fRight.highlight) : 0;
-
-      const rowH = Math.max(hLeft, hRight, FEAT_LINE_H);
+      let rowH;
+      if (!fRight) {
+        // Último item sozinho: ocupa largura total da linha
+        const hLeft = drawFeatItem(fLeft.text, colLeft, y, fLeft.highlight, colW);
+        rowH = Math.max(hLeft, FEAT_LINE_H);
+      } else {
+        const hLeft  = drawFeatItem(fLeft.text, colLeft, y, fLeft.highlight);
+        const hRight = drawFeatItem(fRight.text, colRight, y, fRight.highlight);
+        rowH = Math.max(hLeft, hRight, FEAT_LINE_H);
+      }
       y += rowH + FEAT_ITEM_GAP;
     }
 
