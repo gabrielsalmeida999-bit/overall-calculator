@@ -1725,13 +1725,15 @@ function drawBudgetToCanvas() {
       });
     }
 
-    // Features: estimativa generosa com word-wrap (cada linha pode ter 2 linhas de texto)
-    const featRows = Math.ceil(getFeatures().length / 2);
-    const featH    = featRows * (28 * S + 12 * S);   // ~2 linhas por item + gap
+    // Features: espaçamento compacto entre itens
+    const featRows   = Math.ceil(getFeatures().length / 2);
+    const FEAT_I_GAP = 6 * S;   // gap reduzido entre itens de features
+    const featH      = featRows * (28 * S + FEAT_I_GAP);
 
-    // Logo + footer compacto
-    const H_LOGO = 80 * S;
-    const totalH = H_PAD_TOP + H_HEADER + productH + 40 * S + featH + 40 * S + H_LOGO + 24 * S;
+    // Bloco inferior fixo (divider + features + divider + logo + padding)
+    const H_LOGO   = 80 * S;
+    const H_BOTTOM = 128 * S + featH;   // espaço total reservado no rodapé
+    const totalH   = H_PAD_TOP + H_HEADER + productH + 48 * S + H_BOTTOM;
 
     /* ── Create canvas ── */
     const canvas  = document.createElement('canvas');
@@ -1920,8 +1922,8 @@ function drawBudgetToCanvas() {
       });
     }
 
-    /* ── Espaço extra antes das informações fixas ── */
-    y += 16 * S;
+    /* ── Ancorar no bloco inferior fixo (features + logo sempre no rodapé) ── */
+    y = totalH - H_BOTTOM;
 
     /* ── Divider antes das features ── */
     hline(y, 'rgba(255,255,255,0.10)'); y += 24 * S;
@@ -1939,7 +1941,7 @@ function drawBudgetToCanvas() {
     const FEAT_DOT_OFF  = 5 * S;    // offset vertical do dot a partir do topo do texto
     const FEAT_TEXT_OFF = 14 * S;   // offset horizontal do texto apos o dot
     const FEAT_COL_GAP  = 20 * S;   // gap entre as duas colunas
-    const FEAT_ITEM_GAP = 12 * S;   // gap entre linhas de features
+    const FEAT_ITEM_GAP = FEAT_I_GAP;  // gap compacto entre itens de features
 
     ctx.font = FEAT_FONT;
     const colFeatW = (colW - FEAT_COL_GAP) / 2;   // largura util de cada coluna
