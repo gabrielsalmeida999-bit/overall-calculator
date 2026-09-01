@@ -1,4 +1,4 @@
-const CACHE = 'overall-v4';
+const CACHE = 'overall-v5';
 
 const ASSETS = [
   './',
@@ -8,14 +8,15 @@ const ASSETS = [
   'sw.js'
 ];
 
+// Instala e pré-cacheia — NÃO chama skipWaiting automaticamente
+// A página decide quando ativar (para mostrar o popup de atualização)
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => c.addAll(ASSETS))
   );
 });
 
+// Ativa: limpa caches antigos e assume controle
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -26,6 +27,14 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Quando a página enviar { type: 'SKIP_WAITING' }, ativa imediatamente
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Cache First
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(

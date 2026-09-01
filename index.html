@@ -2439,27 +2439,44 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ═══════════════════════════════════════════════
-   SERVICE WORKER — PWA OFFLINE
+   SERVICE WORKER — PWA OFFLINE + ATUALIZAÇÃO
    ═══════════════════════════════════════════════ */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
-        // Quando o SW instalar e ativar pela primeira vez, mostra toast
+        // Caso já haja um SW aguardando (app aberto depois de update baixado)
+        if (reg.waiting) {
+          showUpdateModal(reg);
+          return;
+        }
+
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated') {
-              showOfflineToast();
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // Já havia versão anterior — mostra popup de atualização
+                showUpdateModal(reg);
+              } else {
+                // Primeira instalação — mostra toast offline
+                showOfflineToast();
+              }
             }
           });
         });
-        // Se já há um SW ativo (sessões seguintes), mostra toast rapidamente
-        if (reg.active) {
-          setTimeout(showOfflineToast, 1000);
+
+        // Sessões seguintes sem update pendente — mostra toast offline
+        if (reg.active && !reg.installing && !reg.waiting) {
+          setTimeout(showOfflineToast, 800);
         }
       })
       .catch(err => console.warn('SW não registrado:', err));
+
+    // Quando o SW novo assumir controle, recarrega a página
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
   });
 }
 
@@ -2469,7 +2486,72 @@ function showOfflineToast() {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
+
+function showUpdateModal(reg) {
+  const modal = document.getElementById('update-modal');
+  if (!modal || modal.classList.contains('open')) return;
+  modal.classList.add('open');
+
+  document.getElementById('update-now-btn').onclick = () => {
+    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    modal.classList.remove('open');
+  };
+
+  document.getElementById('update-later-btn').onclick = () => {
+    modal.classList.remove('open');
+  };
+}
 </script>
+
+<!-- Modal: Nova atualização disponível -->
+<div id="update-modal" style="
+  position:fixed; inset:0; z-index:9998;
+  display:flex; align-items:flex-end; justify-content:center;
+  background:rgba(0,0,0,0); pointer-events:none;
+  transition:background 0.3s ease;">
+  <div id="update-sheet" style="
+    width:100%; max-width:480px;
+    background:#1c1c1e;
+    border-radius:20px 20px 0 0;
+    padding:28px 24px calc(env(safe-area-inset-bottom,0px) + 24px);
+    transform:translateY(100%);
+    transition:transform 0.38s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 -8px 40px rgba(0,0,0,0.6);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span style="font-size:28px">🔄</span>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#fff">Atualização disponível</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:2px">Uma nova versão do app está pronta</div>
+      </div>
+    </div>
+    <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:14px 0 20px;line-height:1.5">
+      Atualize agora para ter a versão mais recente, ou atualize mais tarde na próxima vez que abrir o app.
+    </p>
+    <button id="update-now-btn" style="
+      width:100%; padding:15px; border:none; border-radius:14px;
+      background:#FF7300; color:#fff; font-size:15px; font-weight:700;
+      cursor:pointer; margin-bottom:10px; font-family:inherit;">
+      Atualizar Agora
+    </button>
+    <button id="update-later-btn" style="
+      width:100%; padding:15px; border:none; border-radius:14px;
+      background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7);
+      font-size:15px; font-weight:600; cursor:pointer; font-family:inherit;">
+      Mais Tarde
+    </button>
+  </div>
+</div>
+<style>
+#update-modal.open {
+  background: rgba(0,0,0,0.65);
+  pointer-events: all;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+#update-modal.open #update-sheet {
+  transform: translateY(0);
+}
+</style>
 
 <!-- Toast: App pronto para uso offline -->
 <div id="offline-toast" style="
