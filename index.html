@@ -713,6 +713,70 @@ body {
 .confirm-btn.danger { color: #ff3b30; font-weight: 600; }
 .confirm-btn.cancel { color: rgba(255,255,255,0.5); font-size: 15px; }
 .confirm-btn + .confirm-btn { border-top: 1px solid rgba(255,255,255,0.08); }
+
+/* ============================================================
+   ASSISTÊNCIA TÉCNICA — VIEW SWITCHING
+   ============================================================ */
+#main-view, #at-view { display: block; }
+#at-view { display: none; }
+
+/* AT — parcela grid seleccionável (reutiliza .parcela-item) */
+.at-parcela-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; }
+@media(min-width:460px) { .at-parcela-grid { grid-template-columns: repeat(3,1fr); } }
+@media(min-width:600px) { .at-parcela-grid { grid-template-columns: repeat(4,1fr); } }
+
+/* AT — resultado à vista */
+.at-avista-box {
+  background: linear-gradient(140deg, rgba(255,115,0,0.09), rgba(255,115,0,0.03));
+  border: 1px solid rgba(255,115,0,0.20); border-radius: var(--r-lg); padding: 20px;
+  margin-bottom: 12px; text-align: center;
+}
+.at-avista-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.at-avista-val { font-size: 36px; font-weight: 800; color: var(--orange); letter-spacing: -1.2px; line-height: 1; }
+.at-avista-sel {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px; padding: 7px 16px;
+  background: var(--orange); color: #fff; border: none;
+  border-radius: 20px; font-family: var(--font); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all var(--t); touch-action: manipulation;
+}
+.at-avista-sel:hover { background: #ff8620; }
+.at-avista-sel.selected { background: rgba(255,115,0,0.18); color: var(--orange); border: 1px solid rgba(255,115,0,0.4); }
+
+/* AT — budget form (orçamento) */
+.at-orcamento-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--r-lg); padding: 20px; margin-bottom: 10px;
+}
+
+/* AT — preview wrapper */
+.at-preview-wrap { margin-top: 14px; border-radius: var(--r-lg); overflow: hidden; }
+
+/* AT — payment condition badge */
+.at-paycond {
+  margin-top: 8px; padding: 10px 16px;
+  background: var(--orange-dim); border: 1px solid rgba(255,115,0,0.25);
+  border-radius: var(--r-sm); font-size: 13px; font-weight: 600; color: var(--orange);
+  text-align: center; line-height: 1.4;
+}
+
+/* AT — lucro highlight */
+.at-profit-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; margin-top: 8px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+  border-radius: var(--r-sm); font-size: 13px;
+}
+.at-profit-row .lbl { color: var(--text-secondary); }
+.at-profit-row .val { font-weight: 700; color: #fff; }
+.at-profit-row .val.accent { color: var(--orange); }
+
+/* AT light mode overrides */
+html[data-theme="light"] .at-avista-label { color: rgba(0,0,0,0.52); }
+html[data-theme="light"] .at-profit-row .lbl { color: rgba(0,0,0,0.52); }
+html[data-theme="light"] .at-profit-row .val { color: #1C1C1E; }
+html[data-theme="light"] .parcela-val { color: #1C1C1E; }
+html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--orange); }
 </style>
 </head>
 <body>
@@ -731,6 +795,20 @@ body {
     <button class="sidebar-close" onclick="closeSidebar()">✕</button>
   </div>
   <div class="sidebar-menu">
+    <button class="sidebar-item" onclick="switchView('main'); closeSidebar()">
+      <span class="sidebar-item-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+      </span>
+      <span>Calculadora Apple</span>
+      <span class="sidebar-item-arrow">›</span>
+    </button>
+    <button class="sidebar-item" onclick="switchView('at'); closeSidebar()">
+      <span class="sidebar-item-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 2.5a4 4 0 0 1 0 5.66L5 14.66A2 2 0 0 1 2.34 12l6.5-6.5A4 4 0 0 1 11.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13.5" cy="4.5" r="1" fill="currentColor"/></svg>
+      </span>
+      <span>Assistência Técnica</span>
+      <span class="sidebar-item-arrow">›</span>
+    </button>
     <button class="sidebar-item" onclick="openHistory(); closeSidebar()">
       <span class="sidebar-item-icon">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M9 5.5V9.5l2.5 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -796,6 +874,12 @@ body {
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
+    <button class="header-icon-btn" id="at-nav-btn" onclick="switchView('at')" aria-label="Assistência Técnica" title="Assistência Técnica">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 3a5 5 0 0 1 0 7.07L5.5 17.57A2.5 2.5 0 0 1 2 14.07l7.5-7.5A5 5 0 0 1 13 3z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="15" cy="5" r="1.2" fill="currentColor"/>
+      </svg>
+    </button>
     <button class="header-icon-btn" onclick="openHistory()" aria-label="Histórico" title="Histórico de orçamentos">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/>
@@ -806,8 +890,9 @@ body {
 </header>
 
 <!-- ════════════════════════════════════════════
-     MAIN
+     MAIN — VIEW: CALCULADORA APPLE
      ════════════════════════════════════════════ -->
+<div id="main-view">
 <main class="main">
 
   <!-- CONFIGURAÇÕES -->
@@ -892,6 +977,127 @@ body {
   </div>
 
 </main>
+</div><!-- /#main-view -->
+
+<!-- ════════════════════════════════════════════
+     VIEW: ASSISTÊNCIA TÉCNICA
+     ════════════════════════════════════════════ -->
+<div id="at-view" style="display:none">
+<main class="main">
+
+  <!-- VOLTAR -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+    <button class="header-icon-btn" onclick="switchView('main')" style="flex-shrink:0" aria-label="Voltar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 4L7 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div>
+      <div style="font-size:19px;font-weight:800;letter-spacing:-0.5px">Assistência Técnica</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:1px">Calculadora de orçamento de reparos</div>
+    </div>
+  </div>
+
+  <!-- DADOS DO REPARO -->
+  <p class="section-title">Dados do Reparo</p>
+  <div class="card">
+    <div style="display:grid;gap:14px">
+      <div>
+        <div class="field-label">Modelo do Aparelho</div>
+        <input type="text" class="input-ios" id="at-modelo"
+          placeholder="Ex: iPhone 13 Pro" oninput="atCalc()">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div class="field-label">Valor do Serviço</div>
+          <input type="text" class="input-ios" id="at-servico"
+            placeholder="R$ 0,00" inputmode="numeric"
+            oninput="maskMoney(this); atCalc()">
+        </div>
+        <div>
+          <div class="field-label">Valor da Peça</div>
+          <input type="text" class="input-ios" id="at-peca"
+            placeholder="R$ 0,00" inputmode="numeric"
+            oninput="maskMoney(this); atCalc()">
+        </div>
+      </div>
+      <div>
+        <div class="field-label">Lucro Desejado</div>
+        <input type="text" class="input-ios" id="at-lucro"
+          placeholder="R$ 0,00" inputmode="numeric"
+          oninput="maskMoney(this); atCalc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="at-result" style="display:none">
+    <p class="section-title section-title--spaced">Resultado</p>
+
+    <!-- À Vista -->
+    <div class="at-avista-box" id="at-avista-box">
+      <div class="at-avista-label">Preço à Vista</div>
+      <div class="at-avista-val" id="at-avista-display">R$ 0,00</div>
+      <button class="at-avista-sel" id="at-avista-btn" onclick="atSelectN(0)">
+        Selecionar — À Vista
+      </button>
+    </div>
+
+    <!-- Parcelado -->
+    <div class="at-parcela-grid" id="at-parcela-grid"></div>
+
+    <!-- Resumo de custos -->
+    <div style="margin-top:12px">
+      <div class="at-profit-row">
+        <span class="lbl">Custo total (peça + serviço)</span>
+        <span class="val" id="at-custo-display">R$ 0,00</span>
+      </div>
+      <div class="at-profit-row">
+        <span class="lbl">Lucro líquido estimado</span>
+        <span class="val accent" id="at-lucro-liq-display">R$ 0,00</span>
+      </div>
+    </div>
+
+    <!-- GERAR ORÇAMENTO -->
+    <p class="section-title section-title--spaced">Gerar Orçamento</p>
+    <div class="at-orcamento-card">
+      <div id="at-selected-notice" class="at-paycond" style="margin-bottom:14px">
+        Selecione uma forma de pagamento acima
+      </div>
+      <div style="display:grid;gap:14px">
+        <div>
+          <div class="field-label">Nome do Cliente (opcional)</div>
+          <input type="text" class="input-ios" id="at-cliente"
+            placeholder="Ex: João Silva" oninput="atRefreshPreview()">
+        </div>
+        <div>
+          <div class="field-label">Serviço a Realizar</div>
+          <input type="text" class="input-ios" id="at-descricao"
+            placeholder="Ex: Troca de tela" oninput="atRefreshPreview()">
+        </div>
+      </div>
+      <div style="margin-top:18px">
+        <button class="btn-primary" id="at-gerar-btn" onclick="atGenerateImage()" disabled style="opacity:0.5">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Gerar Orçamento em PNG
+        </button>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="at-preview-section" style="display:none">
+      <p class="section-title section-title--spaced">Preview do Orçamento</p>
+      <div class="at-preview-wrap" id="at-preview-wrap"></div>
+      <div style="margin-top:12px">
+        <button class="btn-secondary" onclick="atDownloadImage()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M8 1v9M4.5 6.5 8 10l3.5-3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11.5v1A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          Salvar PNG / Compartilhar
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /#at-result -->
+
+</main>
+</div><!-- /#at-view -->
 
 <!-- ════════════════════════════════════════════
      JAVASCRIPT
@@ -2705,6 +2911,378 @@ function showOfflineToast() {
   if (!t) return;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ═══════════════════════════════════════════════
+   ASSISTÊNCIA TÉCNICA — STATE & LOGIC
+   ═══════════════════════════════════════════════ */
+let atSelectedN = -1;  // -1 = nenhum, 0 = à vista, 1-12 = parcelas
+let atPreviewVisible = false;
+let atCurrentAvista = 0;
+
+function switchView(view) {
+  const mainView = document.getElementById('main-view');
+  const atView   = document.getElementById('at-view');
+  const atBtn    = document.getElementById('at-nav-btn');
+  if (view === 'at') {
+    mainView.style.display = 'none';
+    atView.style.display   = 'block';
+    if (atBtn) atBtn.style.color = 'var(--orange)';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    mainView.style.display = 'block';
+    atView.style.display   = 'none';
+    if (atBtn) atBtn.style.color = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function atCalc() {
+  const servico = parseMoney(document.getElementById('at-servico')?.value || '');
+  const peca    = parseMoney(document.getElementById('at-peca')?.value || '');
+  const lucro   = parseMoney(document.getElementById('at-lucro')?.value || '');
+  const avista  = servico + peca + lucro;
+  atCurrentAvista = avista;
+
+  const result = document.getElementById('at-result');
+  if (avista <= 0) { result.style.display = 'none'; return; }
+  result.style.display = 'block';
+
+  // Atualiza à vista
+  document.getElementById('at-avista-display').textContent = fmt(avista);
+  document.getElementById('at-custo-display').textContent   = fmt(servico + peca);
+
+  // Constrói grade de parcelas
+  const grid = document.getElementById('at-parcela-grid');
+  grid.innerHTML = Object.keys(RATES).map(n => {
+    const rate  = RATES[n];
+    const total = avista / (1 - rate);
+    const parc  = total / Number(n);
+    const sel   = atSelectedN === Number(n) ? 'selected' : '';
+    const lucroLiq = total - servico - peca;
+    return `
+      <div class="parcela-item ${sel}" onclick="atSelectN(${n})" title="Lucro: ${fmt(lucroLiq)}">
+        <div class="parcela-n">${n}x</div>
+        <div class="parcela-val">${fmtShort(parc)}</div>
+        <div class="parcela-total">${fmtShort(total)}</div>
+      </div>`;
+  }).join('');
+
+  // Recalcula lucro líquido e notice conforme seleção atual
+  atUpdateSelection();
+  if (atPreviewVisible) atRenderPreview();
+}
+
+function atSelectN(n) {
+  atSelectedN = Number(n);
+  atCalc();
+}
+
+function atGetSelectedData() {
+  const servico = parseMoney(document.getElementById('at-servico')?.value || '');
+  const peca    = parseMoney(document.getElementById('at-peca')?.value || '');
+  const avista  = atCurrentAvista;
+  if (atSelectedN === 0 || atSelectedN === -1) {
+    return { total: avista, parc: 0, n: 0, lucroLiq: avista - servico - peca };
+  }
+  const rate = RATES[atSelectedN];
+  const total = avista / (1 - rate);
+  const parc  = total / atSelectedN;
+  return { total, parc, n: atSelectedN, lucroLiq: total - servico - peca };
+}
+
+function atGetPayCondText(data) {
+  if (data.n === 0) return `Valor à vista: ${fmt(data.total)}`;
+  return `${fmt(data.total)} em até ${data.n}x de ${fmt(data.parc)} sem juros`;
+}
+
+function atUpdateSelection() {
+  const notice  = document.getElementById('at-selected-notice');
+  const btn     = document.getElementById('at-gerar-btn');
+  const lucroEl = document.getElementById('at-lucro-liq-display');
+
+  // À vista button state
+  const avistaBtn = document.getElementById('at-avista-btn');
+  if (avistaBtn) {
+    avistaBtn.classList.toggle('selected', atSelectedN === 0);
+    avistaBtn.textContent = atSelectedN === 0 ? '✓ À Vista selecionado' : 'Selecionar — À Vista';
+  }
+
+  if (atSelectedN < 0) {
+    if (notice) notice.textContent = 'Selecione uma forma de pagamento acima';
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+    if (lucroEl) lucroEl.textContent = 'R$ 0,00';
+    return;
+  }
+
+  const data = atGetSelectedData();
+  if (notice) notice.textContent = atGetPayCondText(data);
+  if (lucroEl) lucroEl.textContent = fmt(data.lucroLiq);
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function atRefreshPreview() {
+  if (atPreviewVisible) atRenderPreview();
+}
+
+function atRenderPreview() {
+  const wrap    = document.getElementById('at-preview-wrap');
+  const cliente = (document.getElementById('at-cliente')?.value || '').trim();
+  const modelo  = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
+  const descr   = (document.getElementById('at-descricao')?.value || '').trim() || 'Reparo';
+  const data    = atGetSelectedData();
+  const cond    = atGetPayCondText(data);
+
+  const html = `
+    <div style="background:#000;padding:32px 28px;font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;border-radius:16px;max-width:460px;margin:0 auto">
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:22px">
+        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#fff">Overall<span style="color:#FF7300">.</span></div>
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;margin-top:3px">Assistência Técnica</div>
+      </div>
+
+      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
+
+      ${cliente ? `
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:4px;text-align:center">Para</div>
+        <div style="font-size:22px;font-weight:800;color:#fff;text-align:center;letter-spacing:-0.5px;margin-bottom:16px">${escHtml(cliente)}</div>
+      ` : ''}
+
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Aparelho</div>
+      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:14px">${escHtml(modelo)}</div>
+
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Serviço</div>
+      <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,0.80);margin-bottom:20px">${escHtml(descr)}</div>
+
+      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
+
+      <!-- Price -->
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px">Valor do Reparo</div>
+        <div style="font-size:42px;font-weight:800;color:#FF7300;letter-spacing:-1.5px;line-height:1">${fmt(data.total)}</div>
+        <div style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.55);margin-top:8px">${escHtml(cond)}</div>
+      </div>
+
+      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
+
+      <!-- Footer features -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <span style="font-size:16px;line-height:1;margin-top:1px">✅</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff">6 meses de garantia</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <span style="font-size:16px;line-height:1;margin-top:1px">👨🏻‍🔧</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff">Assistência técnica especializada</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logo footer -->
+      <div style="text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-0.3px;color:rgba(255,255,255,0.30)">Overall<span style="color:#FF7300">.</span></div>
+      </div>
+    </div>`;
+
+  wrap.innerHTML = html;
+}
+
+function atGenerateImage() {
+  if (atSelectedN < 0 || atCurrentAvista <= 0) return;
+  atPreviewVisible = true;
+  atRenderPreview();
+  const sec = document.getElementById('at-preview-section');
+  sec.style.display = 'block';
+  setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+}
+
+function atDownloadImage() {
+  atDrawCanvas().then(canvas => {
+    const filename = `assistencia-overall-${Date.now()}.png`;
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      if (navigator.canShare) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'Orçamento Overall. Assistência Técnica' })
+            .catch(() => atFallbackDownload(blob, filename));
+          return;
+        }
+      }
+      atFallbackDownload(blob, filename);
+    }, 'image/png');
+  }).catch(err => { console.error(err); alert('Erro ao gerar imagem.'); });
+}
+
+function atFallbackDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.download = filename; a.href = url;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function atDrawCanvas() {
+  return new Promise(resolve => {
+    const SCALE  = 3;
+    const W      = 390 * SCALE;
+    const PAD    = 38 * SCALE;
+    const ORANGE = '#FF7300';
+    const WHITE  = '#FFFFFF';
+    const DIM    = 'rgba(255,255,255,0.45)';
+    const DIMMER = 'rgba(255,255,255,0.28)';
+    const font   = (size, weight = '400') => `${weight} ${size * SCALE}px -apple-system,"SF Pro Display","Helvetica Neue",sans-serif`;
+
+    const cliente = (document.getElementById('at-cliente')?.value || '').trim();
+    const modelo  = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
+    const descr   = (document.getElementById('at-descricao')?.value || '').trim() || 'Reparo';
+    const data    = atGetSelectedData();
+    const cond    = atGetPayCondText(data);
+
+    const S   = SCALE;
+    const colW = W - PAD * 2;
+
+    // Calculate height
+    let h = 48*S;                          // top pad
+    h += 36*S;                             // logo
+    h += 14*S;                             // subtitle
+    h += 24*S;                             // divider + gap
+    if (cliente) { h += 22*S + 36*S + 14*S; } // para label + name + gap
+    h += 16*S + 28*S + 14*S;              // aparelho label + value
+    h += 16*S + 22*S + 24*S;              // servico label + value + divider
+    h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
+    h += 48*S;                             // features row
+    h += 30*S;                             // logo footer
+    h += 48*S;                             // bottom pad
+
+    const canvas    = document.createElement('canvas');
+    canvas.width    = W;
+    canvas.height   = h;
+    const ctx       = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, h);
+
+    function roundRect(x, y, w, rh, r, fill, stroke, sw) {
+      ctx.beginPath();
+      ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+      ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+      ctx.lineTo(x+w,y+rh-r); ctx.quadraticCurveTo(x+w,y+rh,x+w-r,y+rh);
+      ctx.lineTo(x+r,y+rh); ctx.quadraticCurveTo(x,y+rh,x,y+rh-r);
+      ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw||1; ctx.stroke(); }
+    }
+
+    function hline(y, alpha) {
+      ctx.fillStyle = `rgba(255,255,255,${alpha||0.10})`;
+      ctx.fillRect(PAD, y, colW, 1*S);
+    }
+
+    function label(text, y) {
+      ctx.textAlign = 'left';
+      ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillText(text.toUpperCase(), PAD, y);
+      return y + 14*S;
+    }
+
+    function measureTextWrap(text, maxW, fnt) {
+      ctx.font = fnt;
+      const words = text.split(' ');
+      let lines = []; let line = '';
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    let y = 48*S;
+
+    // ── Logo ──
+    ctx.textAlign = 'left';
+    ctx.font = font(18, '800'); ctx.fillStyle = WHITE;
+    const logoTxt = 'Overall';
+    const logoW   = ctx.measureText(logoTxt).width;
+    const logoX   = (W - logoW - ctx.measureText('.').width) / 2;
+    ctx.fillText(logoTxt, logoX, y + 24*S);
+    ctx.fillStyle = ORANGE;
+    ctx.fillText('.', logoX + logoW, y + 24*S);
+    y += 36*S;
+    ctx.textAlign = 'center';
+    ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillText('ASSISTENCIA TECNICA', W/2, y + 14*S);
+    y += 24*S;
+
+    hline(y, 0.10); y += 18*S;
+
+    // ── Para (cliente) ──
+    if (cliente) {
+      ctx.textAlign = 'center';
+      ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillText('PARA', W/2, y + 14*S);
+      y += 18*S;
+      ctx.font = font(20, '800'); ctx.fillStyle = WHITE;
+      ctx.fillText(cliente, W/2, y + 26*S);
+      y += 36*S;
+    }
+
+    // ── Aparelho ──
+    ctx.textAlign = 'left';
+    y = label('Aparelho', y);
+    ctx.font = font(15, '700'); ctx.fillStyle = WHITE;
+    ctx.fillText(modelo, PAD, y + 20*S); y += 32*S;
+
+    // ── Serviço ──
+    y = label('Serviço', y);
+    const descrLines = measureTextWrap(descr, colW, font(13, '500'));
+    ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    descrLines.forEach((line, i) => { ctx.fillText(line, PAD, y + (i+1)*18*S); });
+    y += descrLines.length * 18*S + 22*S;
+
+    hline(y, 0.10); y += 22*S;
+
+    // ── Valor ──
+    ctx.textAlign = 'center';
+    ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.letterSpacing = `${1.4*S}px`; ctx.fillText('VALOR DO REPARO', W/2, y + 14*S); ctx.letterSpacing = '0px';
+    y += 20*S;
+    ctx.font = font(38, '800'); ctx.fillStyle = ORANGE;
+    ctx.fillText(fmt(data.total), W/2, y + 46*S); y += 58*S;
+
+    // ── Condition ──
+    const condLines = measureTextWrap(cond, colW * 0.85, font(11, '500'));
+    ctx.font = font(11, '500'); ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    condLines.forEach((line, i) => { ctx.fillText(line, W/2, y + (i+1)*16*S); });
+    y += condLines.length * 16*S + 22*S;
+
+    hline(y, 0.10); y += 22*S;
+
+    // ── Features ──
+    ctx.textAlign = 'left';
+    const feats = ['✅  6 meses de garantia', '👨🏻‍🔧  Assistência especializada'];
+    const col = colW / 2;
+    feats.forEach((f, i) => {
+      ctx.font = font(11, '700'); ctx.fillStyle = WHITE;
+      ctx.fillText(f, PAD + (i * col), y + 16*S);
+    });
+    y += 34*S;
+
+    // ── Logo footer ──
+    hline(y, 0.08); y += 16*S;
+    ctx.textAlign = 'center';
+    ctx.font = font(12, '800'); ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillText('Overall.', W/2, y + 18*S);
+
+    resolve(canvas);
+  });
 }
 
 function showUpdateModal(reg) {
