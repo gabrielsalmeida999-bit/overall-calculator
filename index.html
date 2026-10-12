@@ -1050,10 +1050,6 @@ html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--oran
         <span class="lbl">Custo total (peça + serviço)</span>
         <span class="val" id="at-custo-display">R$ 0,00</span>
       </div>
-      <div class="at-profit-row">
-        <span class="lbl">Lucro líquido estimado</span>
-        <span class="val accent" id="at-lucro-liq-display">R$ 0,00</span>
-      </div>
     </div>
 
     <!-- GERAR ORÇAMENTO -->
@@ -2999,7 +2995,6 @@ function atGetPayCondText(data) {
 function atUpdateSelection() {
   const notice  = document.getElementById('at-selected-notice');
   const btn     = document.getElementById('at-gerar-btn');
-  const lucroEl = document.getElementById('at-lucro-liq-display');
 
   // À vista button state
   const avistaBtn = document.getElementById('at-avista-btn');
@@ -3011,13 +3006,11 @@ function atUpdateSelection() {
   if (atSelectedN < 0) {
     if (notice) notice.textContent = 'Selecione uma forma de pagamento acima';
     if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
-    if (lucroEl) lucroEl.textContent = 'R$ 0,00';
     return;
   }
 
   const data = atGetSelectedData();
   if (notice) notice.textContent = atGetPayCondText(data);
-  if (lucroEl) lucroEl.textContent = fmt(data.lucroLiq);
   if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 }
 
