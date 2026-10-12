@@ -29,9 +29,31 @@
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.50);
   --text-tertiary: rgba(255,255,255,0.26);
+  --header-bg: rgba(8,8,8,0.90);
+  --sidebar-bg: #0d0d0d;
+  --sheet-bg: #1c1c1e;
+  --divider: rgba(255,255,255,0.07);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
   --r-sm: 10px; --r-md: 16px; --r-lg: 22px;
   --t: 0.2s cubic-bezier(0.4,0,0.2,1);
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  --surface: #F5F5F7;
+  --card: rgba(0,0,0,0.04);
+  --card-border: rgba(0,0,0,0.09);
+  --input-bg: rgba(0,0,0,0.05);
+  --input-border: rgba(0,0,0,0.12);
+  --text-primary: #1C1C1E;
+  --text-secondary: rgba(0,0,0,0.50);
+  --text-tertiary: rgba(0,0,0,0.30);
+  --orange-dim: rgba(255,115,0,0.10);
+  --header-bg: rgba(245,245,247,0.92);
+  --sidebar-bg: #FFFFFF;
+  --sheet-bg: #F2F2F7;
+  --divider: rgba(0,0,0,0.08);
+  color-scheme: light;
 }
 
 html { scroll-behavior: smooth; }
@@ -42,6 +64,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================================
@@ -49,12 +72,13 @@ body {
    ============================================================ */
 .header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(8,8,8,0.90);
+  background: var(--header-bg);
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--divider);
   padding: 0 22px; height: 62px;
   display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 .header-left { display: flex; align-items: center; gap: 11px; }
 #header-logo-img { height: 32px; width: auto; object-fit: contain; display: none; }
@@ -454,8 +478,8 @@ body {
 .sidebar {
   position: fixed; top: 0; left: 0; bottom: 0;
   width: min(300px, 82vw);
-  background: #0d0d0d;
-  border-right: 1px solid rgba(255,255,255,0.08);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--divider);
   z-index: 200; transform: translateX(-100%);
   transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1);
   display: flex; flex-direction: column; overflow: hidden;
@@ -464,7 +488,7 @@ body {
 .sidebar.open { transform: translateX(0); }
 
 .sidebar-header {
-  padding: 24px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 24px 20px 18px; border-bottom: 1px solid var(--divider);
   display: flex; align-items: center; justify-content: space-between;
 }
 .sidebar-logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
@@ -512,9 +536,9 @@ body {
 .history-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 18px; height: 62px; flex-shrink: 0;
-  background: rgba(8,8,8,0.92);
+  background: var(--header-bg);
   backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--divider);
   padding-top: env(safe-area-inset-top, 0);
 }
 .history-back {
@@ -595,7 +619,7 @@ body {
 }
 .confirm-overlay.open { opacity: 1; pointer-events: all; }
 .confirm-sheet {
-  background: #1c1c1e; border-radius: 14px 14px 0 0;
+  background: var(--sheet-bg); border-radius: 14px 14px 0 0;
   width: 100%; max-width: 480px; padding: 0 0 8px;
   transform: translateY(20px); transition: transform 0.22s ease;
 }
@@ -686,6 +710,17 @@ body {
     <div class="header-wordmark">Overall<span class="dot">.</span></div>
   </div>
   <div style="display:flex;align-items:center;gap:4px">
+    <button class="header-icon-btn" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Alternar tema" title="Alternar modo claro/escuro">
+      <!-- Ícone lua (modo escuro ativo) -->
+      <svg id="icon-moon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 11.5A7.5 7.5 0 1 1 8.5 3a5.5 5.5 0 0 0 8.5 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <!-- Ícone sol (modo claro ativo) -->
+      <svg id="icon-sun" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none">
+        <circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+    </button>
     <button class="header-icon-btn" onclick="newBudget()" aria-label="Novo orçamento" title="Novo orçamento">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -2509,7 +2544,38 @@ function closeConfirmModal() {
 /* ═══════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   TEMA — CLARO / ESCURO
+   ═══════════════════════════════════════════════ */
+function applyTheme(theme) {
+  const html = document.documentElement;
+  if (theme === 'light') {
+    html.setAttribute('data-theme', 'light');
+    document.getElementById('icon-moon').style.display = 'none';
+    document.getElementById('icon-sun').style.display = 'block';
+  } else {
+    html.removeAttribute('data-theme');
+    document.getElementById('icon-moon').style.display = 'block';
+    document.getElementById('icon-sun').style.display = 'none';
+  }
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.style.color = theme === 'light' ? 'var(--orange)' : '';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  localStorage.setItem('overall_theme', next);
+  applyTheme(next);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('overall_theme') || 'dark';
+  applyTheme(saved);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   setMargin(20);
   addProduct();
   syncGeradorSection();
