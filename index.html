@@ -3076,7 +3076,7 @@ function atRenderPreview() {
 
       <!-- Logo footer -->
       <div style="text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
-        <div style="font-size:14px;font-weight:800;letter-spacing:-0.3px;color:rgba(255,255,255,0.30)">Overall<span style="color:#FF7300">.</span></div>
+        <img src="./logo.svg" style="height:28px;width:auto;opacity:0.45;filter:brightness(10)">
       </div>
     </div>`;
 
@@ -3151,7 +3151,7 @@ function atDrawCanvas() {
     h += 24*S;                             // divider before valor
     h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
     h += 48*S;                             // features row
-    h += 30*S;                             // logo footer
+    h += 16*S + 28*S + 16*S;              // logo footer (divider + wordmark + pad)
     h += 48*S;                             // bottom pad
 
     const canvas    = document.createElement('canvas');
@@ -3270,20 +3270,20 @@ function atDrawCanvas() {
     });
     y += 34*S;
 
-    // ── Logo footer ──
-    hline(y, 0.08); y += 20*S;
-    ctx.font = font(13, '800');
-    const ftTxt = 'Overall';
-    const ftW   = ctx.measureText(ftTxt).width;
-    const ftDot = ctx.measureText('.').width;
-    const ftX   = (W - ftW - ftDot) / 2;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,255,255,0.30)';
-    ctx.fillText(ftTxt, ftX, y + 20*S);
-    ctx.fillStyle = `rgba(255,115,0,0.55)`;
-    ctx.fillText('.', ftX + ftW, y + 20*S);
-
-    resolve(canvas);
+    // ── Logo footer (wordmark SVG) ──
+    hline(y, 0.08); y += 16*S;
+    const logoImg = new Image();
+    logoImg.onload = () => {
+      // aspect ratio 1059:461 → width=200px@1x, height≈87px@1x
+      const lw = 200*S;
+      const lh = Math.round(lw * 461 / 1059);
+      ctx.globalAlpha = 0.45;
+      ctx.drawImage(logoImg, (W - lw) / 2, y, lw, lh);
+      ctx.globalAlpha = 1;
+      resolve(canvas);
+    };
+    logoImg.onerror = () => resolve(canvas); // fallback: sem footer
+    logoImg.src = './logo.svg';
   });
 }
 

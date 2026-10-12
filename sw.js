@@ -1,10 +1,11 @@
-const CACHE = 'overall-v23';
+const CACHE = 'overall-v24';
 
 const ASSETS = [
   './',
   'index.html',
   'manifest.json',
   'icon.png',
+  'logo.svg',
   'sw.js'
 ];
 
