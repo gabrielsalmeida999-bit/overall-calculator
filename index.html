@@ -3041,6 +3041,12 @@ function atRenderPreview() {
         <div style="font-size:22px;font-weight:800;color:#fff;text-align:center;letter-spacing:-0.5px;margin-bottom:16px">${escHtml(cliente)}</div>
       ` : ''}
 
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Aparelho</div>
+      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:14px">${escHtml(modelo)}</div>
+
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Serviço</div>
+      <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,0.80);margin-bottom:20px">${escHtml(descr)}</div>
+
       <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
 
       <!-- Price -->
@@ -3140,6 +3146,8 @@ function atDrawCanvas() {
     h += 28*S;                             // gap after subtitle
     h += 24*S;                             // divider + gap
     if (cliente) { h += 14*S + 18*S + 26*S + 40*S; } // PARA label + gap + name + gap
+    h += 16*S + 36*S;                      // aparelho label + value
+    h += 16*S + 18*S + 24*S;              // servico label + value + gap
     h += 24*S;                             // divider before valor
     h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
     h += 48*S;                             // features row
@@ -3220,6 +3228,19 @@ function atDrawCanvas() {
       ctx.fillText(cliente, W/2, y + 26*S);
       y += 40*S;
     }
+
+    // ── Aparelho ──
+    ctx.textAlign = 'left';
+    y = label('Aparelho', y);
+    ctx.font = font(15, '700'); ctx.fillStyle = WHITE;
+    ctx.fillText(modelo, PAD, y + 22*S); y += 36*S;
+
+    // ── Serviço ──
+    y = label('Serviço', y);
+    const descrLines = measureTextWrap(descr, colW, font(13, '500'));
+    ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    descrLines.forEach((line, i) => { ctx.fillText(line, PAD, y + (i+1)*18*S); });
+    y += descrLines.length * 18*S + 24*S;
 
     hline(y, 0.10); y += 22*S;
 
