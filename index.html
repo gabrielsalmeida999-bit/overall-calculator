@@ -42,18 +42,88 @@
 html[data-theme="light"] {
   --surface: #F5F5F7;
   --card: rgba(0,0,0,0.04);
-  --card-border: rgba(0,0,0,0.09);
-  --input-bg: rgba(0,0,0,0.05);
-  --input-border: rgba(0,0,0,0.12);
+  --card-border: rgba(0,0,0,0.13);
+  --input-bg: rgba(0,0,0,0.055);
+  --input-border: rgba(0,0,0,0.14);
   --text-primary: #1C1C1E;
-  --text-secondary: rgba(0,0,0,0.50);
-  --text-tertiary: rgba(0,0,0,0.30);
+  --text-secondary: rgba(0,0,0,0.52);
+  --text-tertiary: rgba(0,0,0,0.32);
   --orange-dim: rgba(255,115,0,0.10);
   --header-bg: rgba(245,245,247,0.92);
   --sidebar-bg: #FFFFFF;
   --sheet-bg: #F2F2F7;
-  --divider: rgba(0,0,0,0.08);
+  --divider: rgba(0,0,0,0.11);
   color-scheme: light;
+}
+
+/* Elementos com cores hardcoded que precisam de override no modo claro */
+html[data-theme="light"] .header-icon-btn {
+  color: rgba(0,0,0,0.55);
+}
+html[data-theme="light"] .header-wordmark {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .btn-secondary {
+  color: #1C1C1E;
+  background: rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.14);
+}
+html[data-theme="light"] .btn-secondary:hover {
+  background: rgba(0,0,0,0.10);
+  border-color: rgba(0,0,0,0.20);
+}
+html[data-theme="light"] .ios-toggle-track,
+html[data-theme="light"] .ios-toggle-sm-track {
+  background: rgba(0,0,0,0.18);
+}
+html[data-theme="light"] .sidebar-logo,
+html[data-theme="light"] .sidebar-item {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .sidebar-close {
+  color: rgba(0,0,0,0.38);
+}
+html[data-theme="light"] .sidebar-item-arrow {
+  color: rgba(0,0,0,0.28);
+}
+html[data-theme="light"] .history-item-name {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .history-item-inner {
+  background: var(--surface);
+}
+html[data-theme="light"] .toggle-label {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .toggle-row {
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+html[data-theme="light"] .prod-cost-name {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .parcela-val,
+html[data-theme="light"] .stat-value,
+html[data-theme="light"] .total-row .val {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .total-row.big .val {
+  color: var(--orange);
+}
+html[data-theme="light"] .confirm-sheet-title {
+  color: #1C1C1E;
+}
+html[data-theme="light"] .confirm-sheet-divider {
+  background: rgba(0,0,0,0.10);
+}
+html[data-theme="light"] .confirm-btn + .confirm-btn {
+  border-top-color: rgba(0,0,0,0.08);
+}
+html[data-theme="light"] .confirm-btn.cancel {
+  color: rgba(0,0,0,0.45);
+}
+html[data-theme="light"] #update-sheet {
+  background: var(--sheet-bg) !important;
+  color: #1C1C1E;
 }
 
 html { scroll-behavior: smooth; }
