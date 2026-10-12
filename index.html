@@ -1978,7 +1978,7 @@ function renderBudgetCanvas() {
       <div style="${S.divider}"></div>
       ${featHTML}
       <div style="${S.footer}">
-        <img src="${OVERALL_LOGO}" style="height:40px;width:auto;object-fit:contain;max-width:160px;opacity:0.9">
+        <img src="${OVERALL_LOGO}" style="height:26px;width:auto;object-fit:contain;max-width:120px;opacity:0.9">
       </div>
     </div>`;
 }
@@ -2351,14 +2351,14 @@ function drawBudgetToCanvas() {
     /* ── Logo: centralizada, proxima do final ── */
     const logoImg = new Image();
     logoImg.onload = () => {
-      const maxH = 44 * S;
-      const maxW = 180 * S;
+      const maxH = 28 * S;
+      const maxW = 130 * S;
       let lh = logoImg.naturalHeight || maxH;
       let lw = logoImg.naturalWidth  || maxW;
       if (lh > maxH) { lw = lw * (maxH / lh); lh = maxH; }
       if (lw > maxW) { lh = lh * (maxW / lw); lw = maxW; }
       const lx = (W - lw) / 2;
-      const ly = y + 12 * S;   // margem minima acima da logo
+      const ly = y + 10 * S;
       ctx.drawImage(logoImg, lx, ly, lw, lh);
       resolve(canvas);
     };
