@@ -2692,9 +2692,10 @@ if ('serviceWorker' in navigator) {
       })
       .catch(err => console.warn('SW não registrado:', err));
 
-    // Quando o SW novo assumir controle, recarrega ignorando bfcache (iOS)
+    // Backup: se controllerchange disparar antes dos 800ms, recarrega também
+    let reloading = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.href = window.location.href;
+      if (!reloading) { reloading = true; window.location.replace(window.location.href); }
     });
   });
 }
@@ -2711,19 +2712,13 @@ function showUpdateModal(reg) {
   if (!modal || modal.classList.contains('open')) return;
   modal.classList.add('open');
 
-  // Captura a referência agora — reg.waiting pode virar null depois
   const sw = reg.waiting;
 
   document.getElementById('update-now-btn').onclick = () => {
     modal.classList.remove('open');
-    if (sw) {
-      sw.postMessage({ type: 'SKIP_WAITING' });
-    } else {
-      // SW já ativou sem que pegássemos — força reload direto
-      window.location.href = window.location.href;
-    }
-    // Fallback: se controllerchange não disparar em 3s, recarrega mesmo assim
-    setTimeout(() => { window.location.href = window.location.href; }, 3000);
+    if (sw) sw.postMessage({ type: 'SKIP_WAITING' });
+    // Recarrega após 800ms independente do controllerchange (mais confiável no iOS)
+    setTimeout(() => window.location.replace(window.location.href), 800);
   };
 
   document.getElementById('update-later-btn').onclick = () => {
