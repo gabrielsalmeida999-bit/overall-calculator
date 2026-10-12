@@ -3142,11 +3142,14 @@ function atDrawCanvas() {
     // Calculate height
     let h = 48*S;                          // top pad
     h += 36*S;                             // logo
-    h += 14*S;                             // subtitle
+    h += 16*S;                             // subtitle (taller)
+    h += 28*S;                             // gap after subtitle
     h += 24*S;                             // divider + gap
-    if (cliente) { h += 22*S + 36*S + 14*S; } // para label + name + gap
-    h += 16*S + 28*S + 14*S;              // aparelho label + value
-    h += 16*S + 22*S + 24*S;              // servico label + value + divider
+    if (cliente) { h += 14*S + 18*S + 26*S + 40*S + 24*S + 24*S; } // PARA label + gap + name + gap + divider + gap
+    h += 16*S + 36*S;                      // aparelho label + value
+    h += 22*S + 22*S;                      // divider + gap
+    h += 16*S + 18*S + 24*S;              // servico label + value + gap
+    h += 24*S;                             // divider after servico
     h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
     h += 48*S;                             // features row
     h += 30*S;                             // logo footer
@@ -3210,11 +3213,11 @@ function atDrawCanvas() {
     ctx.fillText('.', logoX + logoW, y + 24*S);
     y += 36*S;
     ctx.textAlign = 'center';
-    ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillText('ASSISTENCIA TECNICA', W/2, y + 14*S);
-    y += 24*S;
+    ctx.font = font(11, '800'); ctx.fillStyle = 'rgba(255,255,255,0.60)';
+    ctx.fillText('ASSISTENCIA TECNICA', W/2, y + 16*S);
+    y += 28*S;
 
-    hline(y, 0.10); y += 18*S;
+    hline(y, 0.10); y += 24*S;
 
     // ── Para (cliente) ──
     if (cliente) {
@@ -3224,21 +3227,24 @@ function atDrawCanvas() {
       y += 18*S;
       ctx.font = font(20, '800'); ctx.fillStyle = WHITE;
       ctx.fillText(cliente, W/2, y + 26*S);
-      y += 36*S;
+      y += 40*S;
+      hline(y, 0.08); y += 24*S;
     }
 
     // ── Aparelho ──
     ctx.textAlign = 'left';
     y = label('Aparelho', y);
     ctx.font = font(15, '700'); ctx.fillStyle = WHITE;
-    ctx.fillText(modelo, PAD, y + 20*S); y += 32*S;
+    ctx.fillText(modelo, PAD, y + 22*S); y += 36*S;
+
+    hline(y, 0.08); y += 22*S;
 
     // ── Serviço ──
     y = label('Serviço', y);
     const descrLines = measureTextWrap(descr, colW, font(13, '500'));
     ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.75)';
     descrLines.forEach((line, i) => { ctx.fillText(line, PAD, y + (i+1)*18*S); });
-    y += descrLines.length * 18*S + 22*S;
+    y += descrLines.length * 18*S + 24*S;
 
     hline(y, 0.10); y += 22*S;
 
@@ -3269,10 +3275,17 @@ function atDrawCanvas() {
     y += 34*S;
 
     // ── Logo footer ──
-    hline(y, 0.08); y += 16*S;
-    ctx.textAlign = 'center';
-    ctx.font = font(12, '800'); ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.fillText('Overall.', W/2, y + 18*S);
+    hline(y, 0.08); y += 20*S;
+    ctx.font = font(13, '800');
+    const ftTxt = 'Overall';
+    const ftW   = ctx.measureText(ftTxt).width;
+    const ftDot = ctx.measureText('.').width;
+    const ftX   = (W - ftW - ftDot) / 2;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.30)';
+    ctx.fillText(ftTxt, ftX, y + 20*S);
+    ctx.fillStyle = `rgba(255,115,0,0.55)`;
+    ctx.fillText('.', ftX + ftW, y + 20*S);
 
     resolve(canvas);
   });
