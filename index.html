@@ -2322,6 +2322,31 @@ function loadBudget(id) {
       products[idx].tiShowValue = saved.tiShowValue || false;
     }
 
+    // Sincronizar campos DOM do trade-in (evita que onTradeInChange leia campos
+    // vazios e zere o tiValue quando o usuário interagir com a seção depois)
+    if (saved.tiActive) {
+      const tiSec = document.getElementById(`ti-sec-${newId}`);
+      if (tiSec) tiSec.classList.add('open');
+    }
+    const tiType = saved.tiType || 'iphone';
+    document.getElementById(`ti-tbtn-cash-${newId}`)?.classList.toggle('active', tiType === 'cash');
+    document.getElementById(`ti-tbtn-iphone-${newId}`)?.classList.toggle('active', tiType === 'iphone');
+    const tiCashFields = document.getElementById(`ti-cash-fields-${newId}`);
+    if (tiCashFields) tiCashFields.style.display = tiType === 'cash' ? 'block' : 'none';
+    const tiIphoneFields = document.getElementById(`ti-iphone-fields-${newId}`);
+    if (tiIphoneFields) tiIphoneFields.style.display = tiType === 'iphone' ? 'block' : 'none';
+    if (tiType === 'cash') {
+      const cashEl = document.getElementById(`ti-cash-${newId}`);
+      if (cashEl && saved.tiCash > 0) setMaskedValue(cashEl, saved.tiCash);
+    } else {
+      const modelEl = document.getElementById(`ti-model-${newId}`);
+      if (modelEl && saved.tiModel) modelEl.value = saved.tiModel;
+      const valueEl = document.getElementById(`ti-value-${newId}`);
+      if (valueEl && saved.tiValue > 0) setMaskedValue(valueEl, saved.tiValue);
+      const showEl = document.getElementById(`ti-show-${newId}`);
+      if (showEl) showEl.checked = !!saved.tiShowValue;
+    }
+
     recalcProduct(newId);
 
     // Restaurar parcelamento selecionado
