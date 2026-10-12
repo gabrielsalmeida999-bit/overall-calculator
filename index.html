@@ -2868,7 +2868,7 @@ if ('serviceWorker' in navigator) {
       .then(reg => {
         // Caso já haja um SW aguardando (app aberto depois de update baixado)
         if (reg.waiting) {
-          showUpdateModal(reg);
+          showUpdateModal(reg.waiting);
           return;
         }
 
@@ -2878,7 +2878,7 @@ if ('serviceWorker' in navigator) {
             if (newWorker.state === 'installed') {
               if (navigator.serviceWorker.controller) {
                 // Já havia versão anterior — mostra popup de atualização
-                showUpdateModal(reg);
+                showUpdateModal(newWorker);
               } else {
                 // Primeira instalação — mostra toast offline
                 showOfflineToast();
@@ -3291,18 +3291,21 @@ function atDrawCanvas() {
   });
 }
 
-function showUpdateModal(reg) {
+function showUpdateModal(waitingSW) {
   const modal = document.getElementById('update-modal');
   if (!modal || modal.classList.contains('open')) return;
   modal.classList.add('open');
 
-  const sw = reg.waiting;
-
   document.getElementById('update-now-btn').onclick = () => {
     modal.classList.remove('open');
-    if (sw) sw.postMessage({ type: 'SKIP_WAITING' });
-    // Recarrega após 800ms independente do controllerchange (mais confiável no iOS)
-    setTimeout(() => window.location.replace(window.location.href), 800);
+    if (waitingSW) {
+      waitingSW.postMessage({ type: 'SKIP_WAITING' });
+      // controllerchange listener cuida do reload após o novo SW assumir
+      // fallback caso controllerchange não dispare em 3s
+      setTimeout(() => window.location.replace(window.location.href), 3000);
+    } else {
+      window.location.replace(window.location.href);
+    }
   };
 
   document.getElementById('update-later-btn').onclick = () => {
