@@ -1,4 +1,4 @@
-const CACHE = 'overall-v21';
+const CACHE = 'overall-v22';
 
 const ASSETS = [
   './',
