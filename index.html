@@ -3076,7 +3076,11 @@ function atRenderPreview() {
 
       <!-- Logo footer -->
       <div style="text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
-        <div style="font-size:14px;font-weight:800;letter-spacing:-0.3px;color:rgba(255,255,255,0.30)">Overall<span style="color:#FF7300">.</span></div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="40" height="40" style="opacity:0.55;border-radius:9px">
+          <rect width="192" height="192" rx="42" fill="#1a1a1a"/>
+          <text x="88" y="130" font-family="-apple-system,BlinkMacSystemFont,Helvetica,sans-serif" font-size="88" font-weight="800" fill="#FF7300" text-anchor="middle">O</text>
+          <circle cx="136" cy="114" r="10" fill="#FF7300"/>
+        </svg>
       </div>
     </div>`;
 
@@ -3151,7 +3155,7 @@ function atDrawCanvas() {
     h += 24*S;                             // divider before valor
     h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
     h += 48*S;                             // features row
-    h += 30*S;                             // logo footer
+    h += 16*S + 44*S;                      // logo footer (divider + icon)
     h += 48*S;                             // bottom pad
 
     const canvas    = document.createElement('canvas');
@@ -3270,18 +3274,26 @@ function atDrawCanvas() {
     });
     y += 34*S;
 
-    // ── Logo footer ──
-    hline(y, 0.08); y += 20*S;
-    ctx.font = font(13, '800');
-    const ftTxt = 'Overall';
-    const ftW   = ctx.measureText(ftTxt).width;
-    const ftDot = ctx.measureText('.').width;
-    const ftX   = (W - ftW - ftDot) / 2;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,255,255,0.30)';
-    ctx.fillText(ftTxt, ftX, y + 20*S);
-    ctx.fillStyle = `rgba(255,115,0,0.55)`;
-    ctx.fillText('.', ftX + ftW, y + 20*S);
+    // ── Logo footer (ícone O. da loja) ──
+    hline(y, 0.08); y += 16*S;
+    const iconSize = 44*S;
+    const iconX    = (W - iconSize) / 2;
+    const iconY    = y;
+    const iconR    = 10*S;
+    // fundo arredondado escuro
+    ctx.globalAlpha = 0.55;
+    roundRect(iconX, iconY, iconSize, iconSize, iconR, '#1a1a1a', null, 0);
+    ctx.globalAlpha = 1;
+    // "O" laranja
+    ctx.textAlign = 'center';
+    ctx.font = `800 ${20*S}px -apple-system,"SF Pro Display","Helvetica Neue",sans-serif`;
+    ctx.fillStyle = ORANGE;
+    ctx.fillText('O', iconX + iconSize/2 - 4*S, iconY + iconSize*0.72);
+    // ponto laranja
+    ctx.beginPath();
+    ctx.arc(iconX + iconSize*0.76, iconY + iconSize*0.68, 3.5*S, 0, Math.PI*2);
+    ctx.fillStyle = ORANGE;
+    ctx.fill();
 
     resolve(canvas);
   });
