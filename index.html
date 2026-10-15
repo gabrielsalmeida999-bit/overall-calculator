@@ -1022,11 +1022,19 @@ html[data-theme="light"] .input-ios { color: #1C1C1E; }
         </button>
       </div>
 
-      <div>
-        <div class="field-label">Lucro Desejado</div>
-        <input type="text" class="input-ios" id="at-lucro"
-          placeholder="R$ 0,00" inputmode="numeric"
-          oninput="maskMoney(this); atCalc()">
+      <!-- Modo de exibição (só com 2+ itens) -->
+      <div id="at-display-mode-wrap" style="display:none">
+        <div class="field-label">Exibir valores na imagem como</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <button id="at-mode-total" onclick="setAtDisplayMode('total')"
+            style="padding:10px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:1.5px solid var(--orange);background:var(--orange);color:#fff;transition:all 0.15s">
+            Valor total
+          </button>
+          <button id="at-mode-sep" onclick="setAtDisplayMode('separado')"
+            style="padding:10px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:1.5px solid rgba(255,115,0,0.30);background:transparent;color:var(--orange);transition:all 0.15s">
+            Valores separados
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -2905,6 +2913,24 @@ let atPreviewVisible = false;
 let atCurrentAvista = 0;
 let atItems = [];
 let atItemCounter = 0;
+let atDisplayMode = 'total'; // 'total' | 'separado'
+
+function setAtDisplayMode(mode) {
+  atDisplayMode = mode;
+  const btnTotal = document.getElementById('at-mode-total');
+  const btnSep   = document.getElementById('at-mode-sep');
+  if (btnTotal) {
+    btnTotal.style.background    = mode === 'total' ? 'var(--orange)' : 'transparent';
+    btnTotal.style.color         = mode === 'total' ? '#fff' : 'var(--orange)';
+    btnTotal.style.borderColor   = mode === 'total' ? 'var(--orange)' : 'rgba(255,115,0,0.30)';
+  }
+  if (btnSep) {
+    btnSep.style.background  = mode === 'separado' ? 'var(--orange)' : 'transparent';
+    btnSep.style.color       = mode === 'separado' ? '#fff' : 'var(--orange)';
+    btnSep.style.borderColor = mode === 'separado' ? 'var(--orange)' : 'rgba(255,115,0,0.30)';
+  }
+  if (atPreviewVisible) atRenderPreview();
+}
 
 function addAtItem() {
   const id = ++atItemCounter;
@@ -2921,7 +2947,7 @@ function addAtItem() {
     </div>
     <input type="text" class="input-ios" id="at-item-nome-${id}"
       placeholder="Ex: Troca de tela" oninput="atCalc()" style="padding:11px 13px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       <div>
         <div class="field-label">Mão de obra</div>
         <input type="text" class="input-ios" id="at-item-servico-${id}"
@@ -2931,6 +2957,12 @@ function addAtItem() {
       <div>
         <div class="field-label">Valor da Peça</div>
         <input type="text" class="input-ios" id="at-item-peca-${id}"
+          placeholder="R$ 0,00" inputmode="numeric"
+          oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+      </div>
+      <div>
+        <div class="field-label">Lucro</div>
+        <input type="text" class="input-ios" id="at-item-lucro-${id}"
           placeholder="R$ 0,00" inputmode="numeric"
           oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
       </div>
@@ -2953,9 +2985,10 @@ function removeAtItem(id) {
 function getAtItems() {
   return atItems.map(id => ({
     id,
-    nome: (document.getElementById(`at-item-nome-${id}`)?.value || '').trim(),
+    nome:    (document.getElementById(`at-item-nome-${id}`)?.value || '').trim(),
     servico: parseMoney(document.getElementById(`at-item-servico-${id}`)?.value || ''),
-    peca: parseMoney(document.getElementById(`at-item-peca-${id}`)?.value || '')
+    peca:    parseMoney(document.getElementById(`at-item-peca-${id}`)?.value || ''),
+    lucro:   parseMoney(document.getElementById(`at-item-lucro-${id}`)?.value || '')
   }));
 }
 
@@ -2965,11 +2998,13 @@ function newAtBudget() {
   atCurrentAvista = 0;
   atItems = [];
   atItemCounter = 0;
+  atDisplayMode = 'total';
+  setAtDisplayMode('total');
   const el = id => document.getElementById(id);
   if (el('at-modelo'))  el('at-modelo').value  = '';
-  if (el('at-lucro'))   el('at-lucro').value   = '';
   if (el('at-cliente')) el('at-cliente').value = '';
   if (el('at-items-list')) el('at-items-list').innerHTML = '';
+  if (el('at-display-mode-wrap')) el('at-display-mode-wrap').style.display = 'none';
   if (el('at-result'))  el('at-result').style.display = 'none';
   if (el('at-preview-section')) el('at-preview-section').style.display = 'none';
   addAtItem();
@@ -2996,11 +3031,14 @@ function switchView(view) {
 }
 
 function atCalc() {
-  const items    = getAtItems();
-  const custo    = items.reduce((s, i) => s + i.servico + i.peca, 0);
-  const lucro    = parseMoney(document.getElementById('at-lucro')?.value || '');
-  const avista   = custo + lucro;
+  const items  = getAtItems();
+  const avista = items.reduce((s, i) => s + i.servico + i.peca + i.lucro, 0);
+  const custo  = items.reduce((s, i) => s + i.servico + i.peca, 0);
   atCurrentAvista = avista;
+
+  // Mostrar toggle de modo apenas com 2+ itens
+  const modeWrap = document.getElementById('at-display-mode-wrap');
+  if (modeWrap) modeWrap.style.display = items.length >= 2 ? 'block' : 'none';
 
   const result = document.getElementById('at-result');
   if (avista <= 0) { result.style.display = 'none'; return; }
@@ -3037,7 +3075,7 @@ function atSelectN(n) {
 }
 
 function atGetSelectedData() {
-  const custo  = getAtItems().reduce((s, i) => s + i.servico + i.peca, 0);
+  const custo  = getAtItems().reduce((s, i) => s + i.servico + i.peca, 0); // sem lucro (custo real)
   const avista = atCurrentAvista;
   if (atSelectedN === 0 || atSelectedN === -1) {
     return { total: avista, parc: 0, n: 0, lucroLiq: avista - custo };
@@ -3109,10 +3147,11 @@ function atRenderPreview() {
       <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px">${labelServicos}</div>
       <div style="margin-bottom:20px;display:grid;gap:5px">
         ${items.map(item => {
-          const val = item.servico + item.peca;
+          const showVal = atDisplayMode === 'separado';
+          const itemTotal = item.servico + item.peca + item.lucro;
           return `<div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.80)">${escHtml(item.nome || 'Reparo')}</span>
-            ${val > 0 ? `<span style="font-size:13px;color:rgba(255,255,255,0.45)">${fmt(val)}</span>` : ''}
+            ${showVal && itemTotal > 0 ? `<span style="font-size:14px;font-weight:700;color:#FF7300">${fmt(itemTotal)}</span>` : ''}
           </div>`;
         }).join('')}
       </div>
@@ -3121,7 +3160,7 @@ function atRenderPreview() {
 
       <!-- Price -->
       <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px">Valor do Reparo</div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px">${atDisplayMode === 'separado' && items.length > 1 ? 'Valor Total' : 'Valor do Reparo'}</div>
         <div style="font-size:42px;font-weight:800;color:#FF7300;letter-spacing:-1.5px;line-height:1">${fmt(data.total)}</div>
         <div style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.55);margin-top:8px">${escHtml(cond)}</div>
       </div>
@@ -3307,16 +3346,17 @@ function atDrawCanvas() {
     const labelServicos = itemsCanvas.length > 1 ? 'Serviços' : 'Serviço';
     y = label(labelServicos, y);
     itemsCanvas.forEach((item, i) => {
-      const nome   = item.nome || 'Reparo';
-      const val    = item.servico + item.peca;
-      const lineY  = y + (i + 1) * 22*S;
+      const nome      = item.nome || 'Reparo';
+      const itemTotal = item.servico + item.peca + item.lucro;
+      const showVal   = atDisplayMode === 'separado' && itemTotal > 0;
+      const lineY     = y + (i + 1) * 22*S;
       ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.80)';
       ctx.textAlign = 'left';
       ctx.fillText(nome, PAD, lineY);
-      if (val > 0) {
-        ctx.font = font(12, '400'); ctx.fillStyle = 'rgba(255,255,255,0.40)';
+      if (showVal) {
+        ctx.font = font(13, '700'); ctx.fillStyle = ORANGE;
         ctx.textAlign = 'right';
-        ctx.fillText(fmt(val), W - PAD, lineY);
+        ctx.fillText(fmt(itemTotal), W - PAD, lineY);
       }
     });
     ctx.textAlign = 'left';
@@ -3327,7 +3367,8 @@ function atDrawCanvas() {
     // ── Valor ──
     ctx.textAlign = 'center';
     ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.letterSpacing = `${1.4*S}px`; ctx.fillText('VALOR DO REPARO', W/2, y + 14*S); ctx.letterSpacing = '0px';
+    const valorLabel = (atDisplayMode === 'separado' && itemsCanvas.length > 1) ? 'VALOR TOTAL' : 'VALOR DO REPARO';
+    ctx.letterSpacing = `${1.4*S}px`; ctx.fillText(valorLabel, W/2, y + 14*S); ctx.letterSpacing = '0px';
     y += 20*S;
     ctx.font = font(38, '800'); ctx.fillStyle = ORANGE;
     ctx.fillText(fmt(data.total), W/2, y + 46*S); y += 58*S;
