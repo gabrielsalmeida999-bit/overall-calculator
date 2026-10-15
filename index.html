@@ -1024,15 +1024,15 @@ html[data-theme="light"] .input-ios { color: #1C1C1E; }
 
       <!-- Modo de exibição (só com 2+ itens) -->
       <div id="at-display-mode-wrap" style="display:none">
-        <div class="field-label">Exibir valores na imagem como</div>
+        <div class="field-label">Exibir na imagem</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-          <button id="at-mode-total" onclick="setAtDisplayMode('total')"
+          <button id="at-mode-total" onclick="setAtDisplayMode('total_ind')"
             style="padding:10px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:1.5px solid var(--orange);background:var(--orange);color:#fff;transition:all 0.15s">
-            Valor total
+            Total + individuais
           </button>
-          <button id="at-mode-sep" onclick="setAtDisplayMode('separado')"
+          <button id="at-mode-sep" onclick="setAtDisplayMode('sep')"
             style="padding:10px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:1.5px solid rgba(255,115,0,0.30);background:transparent;color:var(--orange);transition:all 0.15s">
-            Valores separados
+            Só individuais
           </button>
         </div>
       </div>
@@ -1043,17 +1043,11 @@ html[data-theme="light"] .input-ios { color: #1C1C1E; }
   <div id="at-result" style="display:none">
     <p class="section-title section-title--spaced">Resultado</p>
 
-    <!-- À Vista -->
-    <div class="at-avista-box" id="at-avista-box">
-      <div class="at-avista-label">Preço à Vista</div>
+    <!-- Resumo de valores -->
+    <div class="at-avista-box" id="at-avista-box" style="cursor:default">
+      <div class="at-avista-label">Total à Vista</div>
       <div class="at-avista-val" id="at-avista-display">R$ 0,00</div>
-      <button class="at-avista-sel" id="at-avista-btn" onclick="atSelectN(0)">
-        Selecionar — À Vista
-      </button>
     </div>
-
-    <!-- Parcelado -->
-    <div class="at-parcela-grid" id="at-parcela-grid"></div>
 
     <!-- Resumo de custos -->
     <div style="margin-top:12px">
@@ -1066,9 +1060,6 @@ html[data-theme="light"] .input-ios { color: #1C1C1E; }
     <!-- GERAR ORÇAMENTO -->
     <p class="section-title section-title--spaced">Gerar Orçamento</p>
     <div class="at-orcamento-card">
-      <div id="at-selected-notice" class="at-paycond" style="margin-bottom:14px">
-        Selecione uma forma de pagamento acima
-      </div>
       <div style="display:grid;gap:14px">
         <div>
           <div class="field-label">Nome do Cliente (opcional)</div>
@@ -1077,7 +1068,7 @@ html[data-theme="light"] .input-ios { color: #1C1C1E; }
         </div>
       </div>
       <div style="margin-top:18px">
-        <button class="btn-primary" id="at-gerar-btn" onclick="atGenerateImage()" disabled style="opacity:0.5">
+        <button class="btn-primary" id="at-gerar-btn" onclick="atGenerateImage()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           Gerar Orçamento em PNG
         </button>
@@ -2908,38 +2899,93 @@ function showOfflineToast() {
 /* ═══════════════════════════════════════════════
    ASSISTÊNCIA TÉCNICA — STATE & LOGIC
    ═══════════════════════════════════════════════ */
-let atSelectedN = -1;  // -1 = nenhum, 0 = à vista, 1-12 = parcelas
 let atPreviewVisible = false;
 let atCurrentAvista = 0;
 let atItems = [];
 let atItemCounter = 0;
-let atDisplayMode = 'total'; // 'total' | 'separado'
+let atItemParcela = {}; // { [id]: N }  0=à vista, 2-12=parcelas
+let atDisplayMode = 'total_ind'; // 'total_ind' | 'sep'
 
 function setAtDisplayMode(mode) {
   atDisplayMode = mode;
   const btnTotal = document.getElementById('at-mode-total');
   const btnSep   = document.getElementById('at-mode-sep');
   if (btnTotal) {
-    btnTotal.style.background    = mode === 'total' ? 'var(--orange)' : 'transparent';
-    btnTotal.style.color         = mode === 'total' ? '#fff' : 'var(--orange)';
-    btnTotal.style.borderColor   = mode === 'total' ? 'var(--orange)' : 'rgba(255,115,0,0.30)';
+    btnTotal.style.background  = mode === 'total_ind' ? 'var(--orange)' : 'transparent';
+    btnTotal.style.color       = mode === 'total_ind' ? '#fff' : 'var(--orange)';
+    btnTotal.style.borderColor = mode === 'total_ind' ? 'var(--orange)' : 'rgba(255,115,0,0.30)';
   }
   if (btnSep) {
-    btnSep.style.background  = mode === 'separado' ? 'var(--orange)' : 'transparent';
-    btnSep.style.color       = mode === 'separado' ? '#fff' : 'var(--orange)';
-    btnSep.style.borderColor = mode === 'separado' ? 'var(--orange)' : 'rgba(255,115,0,0.30)';
+    btnSep.style.background  = mode === 'sep' ? 'var(--orange)' : 'transparent';
+    btnSep.style.color       = mode === 'sep' ? '#fff' : 'var(--orange)';
+    btnSep.style.borderColor = mode === 'sep' ? 'var(--orange)' : 'rgba(255,115,0,0.30)';
   }
   if (atPreviewVisible) atRenderPreview();
+}
+
+function calcItemParcelado(item) {
+  const avista = item.servico + item.peca + item.lucro;
+  if (!item.parcN) return { avista, total: avista, n: 0, parc: 0 };
+  const rate = RATES[item.parcN];
+  if (!rate) return { avista, total: avista, n: 0, parc: 0 };
+  const total = avista / (1 - rate);
+  return { avista, total, n: item.parcN, parc: total / item.parcN };
+}
+
+function setItemParcela(id, n) {
+  atItemParcela[id] = n;
+  const wrap = document.getElementById(`at-item-parc-wrap-${id}`);
+  if (wrap) {
+    wrap.querySelectorAll('button[data-n]').forEach(btn => {
+      const bn = Number(btn.dataset.n);
+      const sel = bn === n;
+      btn.style.background  = sel ? 'var(--orange)' : 'transparent';
+      btn.style.color       = sel ? '#fff' : 'var(--orange)';
+      btn.style.borderColor = sel ? 'var(--orange)' : 'rgba(255,115,0,0.25)';
+    });
+    // Atualiza label com valor da parcela se item tem valor
+    const items = getAtItems();
+    const item = items.find(i => i.id === id);
+    if (item) {
+      const calc = calcItemParcelado(item);
+      const lbl = document.getElementById(`at-item-parc-lbl-${id}`);
+      if (lbl) {
+        if (calc.n === 0 || calc.avista <= 0) {
+          lbl.textContent = '';
+        } else {
+          lbl.textContent = `${calc.n}x de ${fmt(calc.parc)}`;
+        }
+      }
+    }
+  }
+  atCalc();
 }
 
 function addAtItem() {
   const id = ++atItemCounter;
   atItems.push(id);
+  atItemParcela[id] = 0; // padrão: à vista
   const n = atItems.length;
   const list = document.getElementById('at-items-list');
   const div = document.createElement('div');
   div.id = `at-item-${id}`;
   div.style.cssText = 'display:grid;gap:8px;padding:12px 14px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px';
+
+  const parcOpts = [
+    {n:0, label:'À vista'}, {n:2, label:'2x'}, {n:3, label:'3x'},
+    {n:4, label:'4x'}, {n:5, label:'5x'}, {n:6, label:'6x'},
+    {n:7, label:'7x'}, {n:8, label:'8x'}, {n:9, label:'9x'},
+    {n:10, label:'10x'}, {n:11, label:'11x'}, {n:12, label:'12x'}
+  ];
+  const parcBtns = parcOpts.map(({n: pn, label}) => {
+    const sel = pn === 0;
+    const s = sel
+      ? 'background:var(--orange);color:#fff;border-color:var(--orange)'
+      : 'background:transparent;color:var(--orange);border-color:rgba(255,115,0,0.25)';
+    return `<button onclick="setItemParcela(${id},${pn})" data-n="${pn}"
+      style="${s};padding:5px 9px;border-radius:8px;font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer;border:1.5px solid;transition:all 0.15s;white-space:nowrap">${label}</button>`;
+  }).join('');
+
   div.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">Item ${n}</div>
@@ -2968,12 +3014,20 @@ function addAtItem() {
           placeholder="R$ 0,00" inputmode="numeric"
           oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
       </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="field-label" style="margin-bottom:0">Parcelamento</div>
+          <div id="at-item-parc-lbl-${id}" style="font-size:11px;font-weight:600;color:var(--orange)"></div>
+        </div>
+        <div id="at-item-parc-wrap-${id}" style="display:flex;flex-wrap:wrap;gap:5px">${parcBtns}</div>
+      </div>
     </div>`;
   list.appendChild(div);
 }
 
 function removeAtItem(id) {
   atItems = atItems.filter(i => i !== id);
+  delete atItemParcela[id];
   document.getElementById(`at-item-${id}`)?.remove();
   // renumera labels
   const list = document.getElementById('at-items-list');
@@ -2990,18 +3044,19 @@ function getAtItems() {
     nome:    (document.getElementById(`at-item-nome-${id}`)?.value || '').trim(),
     servico: parseMoney(document.getElementById(`at-item-servico-${id}`)?.value || ''),
     peca:    parseMoney(document.getElementById(`at-item-peca-${id}`)?.value || ''),
-    lucro:   parseMoney(document.getElementById(`at-item-lucro-${id}`)?.value || '')
+    lucro:   parseMoney(document.getElementById(`at-item-lucro-${id}`)?.value || ''),
+    parcN:   atItemParcela[id] ?? 0
   }));
 }
 
 function newAtBudget() {
-  atSelectedN = -1;
   atPreviewVisible = false;
   atCurrentAvista = 0;
   atItems = [];
   atItemCounter = 0;
-  atDisplayMode = 'total';
-  setAtDisplayMode('total');
+  atItemParcela = {};
+  atDisplayMode = 'total_ind';
+  setAtDisplayMode('total_ind');
   const el = id => document.getElementById(id);
   if (el('at-modelo'))  el('at-modelo').value  = '';
   if (el('at-cliente')) el('at-cliente').value = '';
@@ -3038,7 +3093,16 @@ function atCalc() {
   const custo  = items.reduce((s, i) => s + i.servico + i.peca, 0);
   atCurrentAvista = avista;
 
-  // Mostrar toggle de modo apenas com 2+ itens
+  // Atualiza label de parcela em cada item
+  items.forEach(item => {
+    const calc = calcItemParcelado(item);
+    const lbl = document.getElementById(`at-item-parc-lbl-${item.id}`);
+    if (lbl) {
+      lbl.textContent = (calc.n > 0 && calc.avista > 0) ? `${calc.n}x de ${fmt(calc.parc)}` : '';
+    }
+  });
+
+  // Toggle de modo: visível com 2+ itens
   const modeWrap = document.getElementById('at-display-mode-wrap');
   if (modeWrap) modeWrap.style.display = items.length >= 2 ? 'block' : 'none';
 
@@ -3046,144 +3110,86 @@ function atCalc() {
   if (avista <= 0) { result.style.display = 'none'; return; }
   result.style.display = 'block';
 
-  // Atualiza à vista
   document.getElementById('at-avista-display').textContent = fmt(avista);
-  document.getElementById('at-custo-display').textContent   = fmt(custo);
+  document.getElementById('at-custo-display').textContent  = fmt(custo);
 
-  // Constrói grade de parcelas
-  const grid = document.getElementById('at-parcela-grid');
-  grid.innerHTML = Object.keys(RATES).map(n => {
-    const rate  = RATES[n];
-    const total = avista / (1 - rate);
-    const parc  = total / Number(n);
-    const sel   = atSelectedN === Number(n) ? 'selected' : '';
-    const lucroLiq = total - custo;
-    return `
-      <div class="parcela-item ${sel}" onclick="atSelectN(${n})" title="Lucro: ${fmt(lucroLiq)}">
-        <div class="parcela-n">${n}x</div>
-        <div class="parcela-val">${fmtShort(parc)}</div>
-        <div class="parcela-total">${fmtShort(total)}</div>
-      </div>`;
-  }).join('');
-
-  // Recalcula lucro líquido e notice conforme seleção atual
-  atUpdateSelection();
   if (atPreviewVisible) atRenderPreview();
-}
-
-function atSelectN(n) {
-  atSelectedN = Number(n);
-  atCalc();
-}
-
-function atGetSelectedData() {
-  const custo  = getAtItems().reduce((s, i) => s + i.servico + i.peca, 0); // sem lucro (custo real)
-  const avista = atCurrentAvista;
-  if (atSelectedN === 0 || atSelectedN === -1) {
-    return { total: avista, parc: 0, n: 0, lucroLiq: avista - custo };
-  }
-  const rate  = RATES[atSelectedN];
-  const total = avista / (1 - rate);
-  const parc  = total / atSelectedN;
-  return { total, parc, n: atSelectedN, lucroLiq: total - custo };
-}
-
-function atGetPayCondText(data) {
-  if (data.n === 0) return `Valor à vista: ${fmt(data.total)}`;
-  return `${fmt(data.total)} em até ${data.n}x de ${fmt(data.parc)} sem juros`;
-}
-
-function atUpdateSelection() {
-  const notice  = document.getElementById('at-selected-notice');
-  const btn     = document.getElementById('at-gerar-btn');
-
-  // À vista button state
-  const avistaBtn = document.getElementById('at-avista-btn');
-  if (avistaBtn) {
-    avistaBtn.classList.toggle('selected', atSelectedN === 0);
-    avistaBtn.textContent = atSelectedN === 0 ? '✓ À Vista selecionado' : 'Selecionar — À Vista';
-  }
-
-  if (atSelectedN < 0) {
-    if (notice) notice.textContent = 'Selecione uma forma de pagamento acima';
-    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
-    return;
-  }
-
-  const data = atGetSelectedData();
-  if (notice) notice.textContent = atGetPayCondText(data);
-  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 }
 
 function atRefreshPreview() {
   if (atPreviewVisible) atRenderPreview();
 }
 
+function atItemPayLine(item) {
+  const calc = calcItemParcelado(item);
+  if (calc.avista <= 0) return '';
+  if (calc.n === 0) return `À vista &nbsp;•&nbsp; ${fmt(calc.total)}`;
+  return `${calc.n}x de ${fmt(calc.parc)} &nbsp;•&nbsp; Total: ${fmt(calc.total)}`;
+}
+
 function atRenderPreview() {
   const wrap    = document.getElementById('at-preview-wrap');
   const cliente = (document.getElementById('at-cliente')?.value || '').trim();
   const modelo  = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
-  const items   = getAtItems().filter(i => i.nome || i.servico + i.peca > 0);
-  const data    = atGetSelectedData();
-  const cond    = atGetPayCondText(data);
-  const labelServicos = items.length > 1 ? 'Serviços' : 'Serviço';
+  const rawItems = getAtItems().filter(i => i.nome || i.servico + i.peca > 0);
+  const items = rawItems.length > 0 ? rawItems : [{ id:-1, nome:'Reparo', servico:0, peca:0, lucro:0, parcN:0 }];
+  const grandTotal = items.reduce((s, i) => s + calcItemParcelado(i).total, 0);
+  const showTotal = atDisplayMode === 'total_ind' && items.length > 1;
+  const labelServicos = items.length > 1 ? 'SERVIÇOS' : 'SERVIÇO';
 
   const html = `
-    <div style="background:#000;padding:32px 28px;font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;border-radius:16px;max-width:460px;margin:0 auto">
+    <div style="background:#000;padding:28px 24px;font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;border-radius:16px;max-width:460px;margin:0 auto">
       <!-- Header -->
-      <div style="text-align:center;margin-bottom:22px">
-        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#fff">Overall<span style="color:#FF7300">.</span></div>
-        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;margin-top:3px">Assistência Técnica</div>
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#fff">Overall<span style="color:#FF7300">.</span></div>
+        <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;margin-top:2px">Assistência Técnica</div>
       </div>
 
-      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
+      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 16px"></div>
 
       ${cliente ? `
-        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:4px;text-align:center">Para</div>
-        <div style="font-size:22px;font-weight:800;color:#fff;text-align:center;letter-spacing:-0.5px;margin-bottom:16px">${escHtml(cliente)}</div>
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;text-align:center;margin-bottom:3px">Para</div>
+        <div style="font-size:18px;font-weight:800;color:#fff;text-align:center;letter-spacing:-0.4px;margin-bottom:14px">${escHtml(cliente)}</div>
       ` : ''}
 
-      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Aparelho</div>
-      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:14px">${escHtml(modelo)}</div>
+      <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:3px">Aparelho</div>
+      <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:16px">${escHtml(modelo)}</div>
 
-      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px">${labelServicos}</div>
-      <div style="margin-bottom:20px;display:grid;gap:5px">
+      <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px">${labelServicos}</div>
+      <div style="display:grid;gap:12px;margin-bottom:16px">
         ${items.map(item => {
-          const showVal = atDisplayMode === 'separado';
-          const itemTotal = item.servico + item.peca + item.lucro;
-          return `<div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.80)">${escHtml(item.nome || 'Reparo')}</span>
-            ${showVal && itemTotal > 0 ? `<span style="font-size:14px;font-weight:700;color:#FF7300">${fmt(itemTotal)}</span>` : ''}
+          const avista = item.servico + item.peca + item.lucro;
+          const payLine = avista > 0 ? atItemPayLine(item) : '';
+          return `<div>
+            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:3px">${escHtml(item.nome || 'Reparo')}</div>
+            ${payLine ? `<div style="font-size:12px;font-weight:600;color:#FF7300">${payLine}</div>` : ''}
           </div>`;
         }).join('')}
       </div>
 
-      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
-
-      <!-- Price -->
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px">${atDisplayMode === 'separado' && items.length > 1 ? 'Valor Total' : 'Valor do Reparo'}</div>
-        <div style="font-size:42px;font-weight:800;color:#FF7300;letter-spacing:-1.5px;line-height:1">${fmt(data.total)}</div>
-        <div style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.55);margin-top:8px">${escHtml(cond)}</div>
-      </div>
-
-      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
-
-      <!-- Footer features -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:16px;line-height:1;margin-top:1px">✅</span>
-          <div><div style="font-size:12px;font-weight:700;color:#fff">6 meses de garantia</div></div>
+      ${showTotal ? `
+        <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 12px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.40);letter-spacing:1px;text-transform:uppercase">Total do Orçamento</div>
+          <div style="font-size:17px;font-weight:700;color:rgba(255,255,255,0.75)">${fmt(grandTotal)}</div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:16px;line-height:1;margin-top:1px">👨🏻‍🔧</span>
-          <div><div style="font-size:12px;font-weight:700;color:#fff">Assistência especializada</div></div>
+      ` : ''}
+
+      <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 16px"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0">
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          <span style="font-size:14px;line-height:1;margin-top:1px">✅</span>
+          <div style="font-size:11px;font-weight:700;color:#fff">6 meses de garantia</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          <span style="font-size:14px;line-height:1;margin-top:1px">👨🏻‍🔧</span>
+          <div style="font-size:11px;font-weight:700;color:#fff">Assistência especializada</div>
         </div>
       </div>
 
-      <!-- Logo footer -->
-      <div style="text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
-        <img src="./logo.svg" style="height:36px;width:auto;opacity:0.9">
+      <div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
+        <img src="./logo.svg" style="height:30px;width:auto;opacity:0.9">
       </div>
     </div>`;
 
@@ -3191,7 +3197,7 @@ function atRenderPreview() {
 }
 
 function atGenerateImage() {
-  if (atSelectedN < 0 || atCurrentAvista <= 0) return;
+  if (atCurrentAvista <= 0) return;
   atPreviewVisible = true;
   atRenderPreview();
   const sec = document.getElementById('at-preview-section');
@@ -3228,160 +3234,141 @@ function atFallbackDownload(blob, filename) {
 
 function atDrawCanvas() {
   return new Promise(resolve => {
-    const SCALE  = 3;
-    const W      = 390 * SCALE;
-    const PAD    = 38 * SCALE;
+    const S      = 3;
+    const W      = 390 * S;
+    const PAD    = 36 * S;
     const ORANGE = '#FF7300';
     const WHITE  = '#FFFFFF';
-    const DIM    = 'rgba(255,255,255,0.45)';
-    const DIMMER = 'rgba(255,255,255,0.28)';
-    const font   = (size, weight = '400') => `${weight} ${size * SCALE}px -apple-system,"SF Pro Display","Helvetica Neue",sans-serif`;
+    const font   = (size, weight = '400') => `${weight} ${size * S}px -apple-system,"SF Pro Display","Helvetica Neue",sans-serif`;
 
-    const cliente    = (document.getElementById('at-cliente')?.value || '').trim();
-    const modelo     = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
-    const allItems   = getAtItems().filter(i => i.nome || i.servico + i.peca > 0);
-    const itemsCanvas = allItems.length > 0 ? allItems : [{ nome: 'Reparo', servico: 0, peca: 0 }];
-    const data    = atGetSelectedData();
-    const cond    = atGetPayCondText(data);
+    const cliente     = (document.getElementById('at-cliente')?.value || '').trim();
+    const modelo      = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
+    const allItems    = getAtItems().filter(i => i.nome || i.servico + i.peca > 0);
+    const itemsCanvas = allItems.length > 0 ? allItems : [{ id:-1, nome:'Reparo', servico:0, peca:0, lucro:0, parcN:0 }];
+    const showTotal   = atDisplayMode === 'total_ind' && itemsCanvas.length > 1;
+    const grandTotal  = itemsCanvas.reduce((s, i) => s + calcItemParcelado(i).total, 0);
+    const colW        = W - PAD * 2;
 
-    const S   = SCALE;
-    const colW = W - PAD * 2;
+    // Calcula altura dinâmica
+    let h = 44*S;                              // top pad
+    h += 32*S + 18*S + 24*S;                  // logo + subtitle + gap
+    h += 1*S + 22*S;                           // divider + gap
+    if (cliente) h += 14*S + 14*S + 30*S + 36*S; // PARA label + gap + name + gap
+    h += 14*S + 14*S + 28*S + 20*S;           // aparelho label + gap + value + gap
+    h += 14*S + 14*S;                          // serviços label + gap
+    itemsCanvas.forEach(() => { h += 22*S + 18*S + 14*S; }); // nome + pay + gap per item
+    if (showTotal) { h += 1*S + 14*S + 24*S + 22*S; } // divider + total row + gap
+    h += 1*S + 20*S;                           // divider + gap
+    h += 24*S + 30*S;                          // features + gap
+    h += 1*S + 12*S + 44*S + 40*S;            // logo footer
 
-    // Calculate height
-    let h = 48*S;                          // top pad
-    h += 36*S;                             // logo
-    h += 16*S;                             // subtitle
-    h += 28*S;                             // gap after subtitle
-    h += 24*S;                             // divider + gap
-    if (cliente) { h += 14*S + 18*S + 26*S + 40*S; } // PARA label + gap + name + gap
-    h += 16*S + 36*S;                      // aparelho label + value
-    h += 16*S;                             // serviços label
-    h += itemsCanvas.length * 22*S + 24*S; // items rows + gap
-    h += 24*S;                             // divider before valor
-    h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
-    h += 48*S;                             // features row
-    h += 16*S + 28*S + 16*S;              // logo footer (divider + wordmark + pad)
-    h += 48*S;                             // bottom pad
+    const canvas = document.createElement('canvas');
+    canvas.width  = W;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
 
-    const canvas    = document.createElement('canvas');
-    canvas.width    = W;
-    canvas.height   = h;
-    const ctx       = canvas.getContext('2d');
-
-    // Background
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, W, h);
 
-    function roundRect(x, y, w, rh, r, fill, stroke, sw) {
-      ctx.beginPath();
-      ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
-      ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-      ctx.lineTo(x+w,y+rh-r); ctx.quadraticCurveTo(x+w,y+rh,x+w-r,y+rh);
-      ctx.lineTo(x+r,y+rh); ctx.quadraticCurveTo(x,y+rh,x,y+rh-r);
-      ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
-      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = sw||1; ctx.stroke(); }
-    }
-
     function hline(y, alpha) {
-      ctx.fillStyle = `rgba(255,255,255,${alpha||0.10})`;
+      ctx.fillStyle = `rgba(255,255,255,${alpha || 0.10})`;
       ctx.fillRect(PAD, y, colW, 1*S);
     }
 
-    function label(text, y) {
+    function smallLabel(text, y) {
       ctx.textAlign = 'left';
-      ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = font(9, '700');
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.letterSpacing = `${1.2*S}px`;
       ctx.fillText(text.toUpperCase(), PAD, y);
+      ctx.letterSpacing = '0px';
       return y + 14*S;
     }
 
-    function measureTextWrap(text, maxW, fnt) {
-      ctx.font = fnt;
-      const words = text.split(' ');
-      let lines = []; let line = '';
-      for (const w of words) {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
-        else line = test;
-      }
-      if (line) lines.push(line);
-      return lines;
-    }
+    let y = 44*S;
 
-    let y = 48*S;
-
-    // ── Logo ──
-    ctx.textAlign = 'left';
-    ctx.font = font(18, '800'); ctx.fillStyle = WHITE;
-    const logoTxt = 'Overall';
-    const logoW   = ctx.measureText(logoTxt).width;
-    const logoX   = (W - logoW - ctx.measureText('.').width) / 2;
-    ctx.fillText(logoTxt, logoX, y + 24*S);
+    // ── Wordmark ──
+    ctx.font = font(16, '800'); ctx.fillStyle = WHITE; ctx.textAlign = 'left';
+    const lTxt = 'Overall';
+    const lW   = ctx.measureText(lTxt).width;
+    const lX   = (W - lW - ctx.measureText('.').width) / 2;
+    ctx.fillText(lTxt, lX, y + 22*S);
     ctx.fillStyle = ORANGE;
-    ctx.fillText('.', logoX + logoW, y + 24*S);
-    y += 36*S;
+    ctx.fillText('.', lX + lW, y + 22*S);
+    y += 32*S;
     ctx.textAlign = 'center';
-    ctx.font = font(11, '800'); ctx.fillStyle = 'rgba(255,255,255,0.60)';
-    ctx.fillText('ASSISTENCIA TECNICA', W/2, y + 16*S);
-    y += 28*S;
+    ctx.font = font(9, '800'); ctx.fillStyle = 'rgba(255,255,255,0.50)';
+    ctx.letterSpacing = `${1.8*S}px`;
+    ctx.fillText('ASSISTENCIA TECNICA', W/2, y + 14*S);
+    ctx.letterSpacing = '0px';
+    y += 24*S;
 
-    hline(y, 0.10); y += 24*S;
+    hline(y); y += 22*S;
 
     // ── Para (cliente) ──
     if (cliente) {
       ctx.textAlign = 'center';
+      y = smallLabel('Para', y - PAD + PAD); // reuse, centered
       ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.fillText('PARA', W/2, y + 14*S);
-      y += 18*S;
-      ctx.font = font(20, '800'); ctx.fillStyle = WHITE;
+      ctx.letterSpacing = `${1.2*S}px`;
+      ctx.textAlign = 'center';
+      ctx.fillText('PARA', W/2, y);
+      ctx.letterSpacing = '0px';
+      y += 14*S;
+      ctx.font = font(18, '800'); ctx.fillStyle = WHITE;
       ctx.fillText(cliente, W/2, y + 26*S);
-      y += 40*S;
+      y += 36*S;
     }
 
     // ── Aparelho ──
     ctx.textAlign = 'left';
-    y = label('Aparelho', y);
+    y = smallLabel('Aparelho', y);
+    y += 14*S;
     ctx.font = font(15, '700'); ctx.fillStyle = WHITE;
-    ctx.fillText(modelo, PAD, y + 22*S); y += 36*S;
+    ctx.fillText(modelo, PAD, y); y += 28*S;
 
-    // ── Serviço(s) ──
-    const labelServicos = itemsCanvas.length > 1 ? 'Serviços' : 'Serviço';
-    y = label(labelServicos, y);
-    itemsCanvas.forEach((item, i) => {
-      const nome      = item.nome || 'Reparo';
-      const itemTotal = item.servico + item.peca + item.lucro;
-      const showVal   = atDisplayMode === 'separado' && itemTotal > 0;
-      const lineY     = y + (i + 1) * 22*S;
-      ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.80)';
-      ctx.textAlign = 'left';
-      ctx.fillText(nome, PAD, lineY);
-      if (showVal) {
-        ctx.font = font(13, '700'); ctx.fillStyle = ORANGE;
-        ctx.textAlign = 'right';
-        ctx.fillText(fmt(itemTotal), W - PAD, lineY);
+    // ── Serviços ──
+    const labelSvc = itemsCanvas.length > 1 ? 'Serviços' : 'Serviço';
+    y = smallLabel(labelSvc, y);
+    y += 14*S;
+
+    itemsCanvas.forEach(item => {
+      const calc = calcItemParcelado(item);
+      const nome = item.nome || 'Reparo';
+
+      // Nome do serviço — principal, bold, branco
+      ctx.font = font(15, '700'); ctx.fillStyle = WHITE; ctx.textAlign = 'left';
+      ctx.fillText(nome, PAD, y); y += 22*S;
+
+      // Linha de pagamento — secundária, laranja
+      if (calc.avista > 0) {
+        let payTxt;
+        if (calc.n === 0) {
+          payTxt = `À vista  •  ${fmt(calc.total)}`;
+        } else {
+          payTxt = `${calc.n}x de ${fmt(calc.parc)}  •  Total: ${fmt(calc.total)}`;
+        }
+        ctx.font = font(12, '600'); ctx.fillStyle = ORANGE;
+        ctx.fillText(payTxt, PAD, y); y += 18*S;
       }
+      y += 14*S; // espaço entre itens
     });
-    ctx.textAlign = 'left';
-    y += itemsCanvas.length * 22*S + 24*S;
 
-    hline(y, 0.10); y += 22*S;
+    // ── Total (opcional, modo total_ind) ──
+    if (showTotal) {
+      hline(y, 0.10); y += 14*S;
+      ctx.textAlign = 'left';
+      ctx.font = font(9, '600'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.letterSpacing = `${1.2*S}px`;
+      ctx.fillText('TOTAL DO ORÇAMENTO', PAD, y + 16*S);
+      ctx.letterSpacing = '0px';
+      ctx.textAlign = 'right';
+      ctx.font = font(16, '700'); ctx.fillStyle = 'rgba(255,255,255,0.70)';
+      ctx.fillText(fmt(grandTotal), W - PAD, y + 16*S);
+      y += 24*S + 22*S;
+    }
 
-    // ── Valor ──
-    ctx.textAlign = 'center';
-    ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    const valorLabel = (atDisplayMode === 'separado' && itemsCanvas.length > 1) ? 'VALOR TOTAL' : 'VALOR DO REPARO';
-    ctx.letterSpacing = `${1.4*S}px`; ctx.fillText(valorLabel, W/2, y + 14*S); ctx.letterSpacing = '0px';
-    y += 20*S;
-    ctx.font = font(38, '800'); ctx.fillStyle = ORANGE;
-    ctx.fillText(fmt(data.total), W/2, y + 46*S); y += 58*S;
-
-    // ── Condition ──
-    const condLines = measureTextWrap(cond, colW * 0.85, font(11, '500'));
-    ctx.font = font(11, '500'); ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    condLines.forEach((line, i) => { ctx.fillText(line, W/2, y + (i+1)*16*S); });
-    y += condLines.length * 16*S + 22*S;
-
-    hline(y, 0.10); y += 22*S;
+    hline(y, 0.10); y += 20*S;
 
     // ── Features ──
     ctx.textAlign = 'left';
@@ -3391,14 +3378,13 @@ function atDrawCanvas() {
       ctx.font = font(11, '700'); ctx.fillStyle = WHITE;
       ctx.fillText(f, PAD + (i * col), y + 16*S);
     });
-    y += 34*S;
+    y += 30*S;
 
-    // ── Logo footer (wordmark SVG) ──
-    hline(y, 0.08); y += 16*S;
+    // ── Logo footer ──
+    hline(y, 0.08); y += 12*S;
     const logoImg = new Image();
     logoImg.onload = () => {
-      const maxH = 40 * S;
-      const maxW = 130 * S;
+      const maxH = 36 * S, maxW = 120 * S;
       let lh = logoImg.naturalHeight || maxH;
       let lw = logoImg.naturalWidth  || maxW;
       if (lh > maxH) { lw = lw * (maxH / lh); lh = maxH; }
@@ -3406,7 +3392,7 @@ function atDrawCanvas() {
       ctx.drawImage(logoImg, (W - lw) / 2, y, lw, lh);
       resolve(canvas);
     };
-    logoImg.onerror = () => resolve(canvas); // fallback: sem footer
+    logoImg.onerror = () => resolve(canvas);
     logoImg.src = './logo.svg';
   });
 }
