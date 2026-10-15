@@ -2860,41 +2860,28 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ═══════════════════════════════════════════════
-   SERVICE WORKER — PWA OFFLINE + ATUALIZAÇÃO
+   SERVICE WORKER — PWA OFFLINE + ATUALIZAÇÃO AUTOMÁTICA
    ═══════════════════════════════════════════════ */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
-        // Caso já haja um SW aguardando (app aberto depois de update baixado)
-        if (reg.waiting) {
-          showUpdateModal(reg.waiting);
-          return;
-        }
-
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed') {
-              if (navigator.serviceWorker.controller) {
-                // Já havia versão anterior — mostra popup de atualização
-                showUpdateModal(newWorker);
-              } else {
-                // Primeira instalação — mostra toast offline
-                showOfflineToast();
-              }
+            // SW auto-ativa via skipWaiting; controllerchange cuida do reload
+            if (newWorker.state === 'installed' && !navigator.serviceWorker.controller) {
+              showOfflineToast(); // primeira instalação
             }
           });
         });
-
-        // Sessões seguintes sem update pendente — mostra toast offline
         if (reg.active && !reg.installing && !reg.waiting) {
           setTimeout(showOfflineToast, 800);
         }
       })
       .catch(err => console.warn('SW não registrado:', err));
 
-    // Backup: se controllerchange disparar antes dos 800ms, recarrega também
+    // Recarrega automaticamente quando novo SW assume controle
     let reloading = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!reloading) { reloading = true; window.location.replace(window.location.href); }

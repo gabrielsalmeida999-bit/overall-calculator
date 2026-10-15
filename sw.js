@@ -1,4 +1,4 @@
-const CACHE = 'overall-v26';
+const CACHE = 'overall-v27';
 
 const ASSETS = [
   './',
@@ -9,61 +9,59 @@ const ASSETS = [
   'sw.js'
 ];
 
+// Instala, pré-cacheia e ativa imediatamente (sem esperar popup)
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
+    caches.open(CACHE)
+      .then(c => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())   // ← assume controle imediatamente
   );
 });
 
+// Ativa: limpa caches antigos e assume todos os clientes
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
         keys.filter(k => k !== CACHE).map(k => caches.delete(k))
       ))
-      .then(() => self.clients.claim())
+      .then(() => self.clients.claim())  // ← toma conta de todas as abas abertas
   );
 });
 
-self.addEventListener('message', e => {
-  if (e.data && e.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
-// Network First para index.html — garante sempre a versão mais recente
-// Cache First para demais assets (ícones, imagens, etc.)
+// Network First para index.html — sempre busca versão mais recente da rede
+// Cache First para assets estáticos (ícones, imagens, logo)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
   const url = new URL(e.request.url);
-  const isHTML = url.pathname === '/' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/');
+  const isPage = url.pathname === '/overall-calculator/'
+               || url.pathname === '/overall-calculator/index.html'
+               || url.pathname.endsWith('/');
 
-  if (isHTML) {
-    // Network First: tenta rede, cai no cache se offline
+  if (isPage) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
-          if (!res || res.status !== 200 || res.type === 'opaque') return res;
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+          if (res && res.status === 200 && res.type !== 'opaque') {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
           return res;
         })
         .catch(() => caches.match(e.request))
     );
   } else {
-    // Cache First para assets estáticos
     e.respondWith(
       caches.match(e.request).then(cached => {
         if (cached) return cached;
-        return fetch(e.request)
-          .then(res => {
-            if (!res || res.status !== 200 || res.type === 'opaque') return res;
+        return fetch(e.request).then(res => {
+          if (res && res.status === 200 && res.type !== 'opaque') {
             const clone = res.clone();
             caches.open(CACHE).then(c => c.put(e.request, clone));
-            return res;
-          })
-          .catch(() => caches.match('index.html'));
+          }
+          return res;
+        }).catch(() => caches.match('index.html'));
       })
     );
   }
