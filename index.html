@@ -2903,7 +2903,8 @@ let atPreviewVisible = false;
 let atCurrentAvista = 0;
 let atItems = [];
 let atItemCounter = 0;
-let atItemParcela = {}; // { [id]: N }  0=à vista, 2-12=parcelas
+let atItemParcela    = {}; // { [id]: N }  0=à vista, 2-12=parcelas
+let atItemValorCobrar = {}; // { [id]: number | null }  null=auto
 let atDisplayMode = 'total_ind'; // 'total_ind' | 'sep'
 
 function setAtDisplayMode(mode) {
@@ -2923,17 +2924,53 @@ function setAtDisplayMode(mode) {
   if (atPreviewVisible) atRenderPreview();
 }
 
+function calcSuggestedCobrar(item) {
+  const avista = item.servico + item.peca + item.lucro;
+  if (!item.parcN) return avista;
+  const rate = RATES[item.parcN] || 0;
+  return rate > 0 ? avista / (1 - rate) : avista;
+}
+
 function calcItemParcelado(item) {
   const avista = item.servico + item.peca + item.lucro;
-  if (!item.parcN) return { avista, total: avista, n: 0, parc: 0 };
-  const rate = RATES[item.parcN];
-  if (!rate) return { avista, total: avista, n: 0, parc: 0 };
-  const total = avista / (1 - rate);
-  return { avista, total, n: item.parcN, parc: total / item.parcN };
+  const rate = (item.parcN > 0 && RATES[item.parcN]) ? RATES[item.parcN] : 0;
+  const suggested = rate > 0 ? avista / (1 - rate) : avista;
+  const manualVal = atItemValorCobrar[item.id];
+  const total = (manualVal != null && manualVal > 0) ? manualVal : suggested;
+  const parc = item.parcN > 0 ? total / item.parcN : 0;
+  return { avista, total, n: item.parcN || 0, parc };
+}
+
+function updateLucroEfetivo(id) {
+  const items = getAtItems();
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const field = document.getElementById(`at-item-cobrar-${id}`);
+  const cobrarVal = field ? parseMoney(field.value || '') : 0;
+  const rate = (item.parcN > 0 && RATES[item.parcN]) ? RATES[item.parcN] : 0;
+  const lucroEf = cobrarVal * (1 - rate) - item.servico - item.peca;
+  const lbl = document.getElementById(`at-item-lucroef-${id}`);
+  if (!lbl) return;
+  if (cobrarVal > 0) {
+    lbl.textContent = fmt(lucroEf);
+    lbl.style.color = lucroEf >= 0 ? 'var(--orange)' : '#FF4040';
+  } else {
+    lbl.textContent = '—';
+    lbl.style.color = 'var(--text-secondary)';
+  }
+}
+
+function onItemCobrarInput(id, el) {
+  maskMoney(el);
+  const val = parseMoney(el.value || '');
+  atItemValorCobrar[id] = val > 0 ? val : null;
+  updateLucroEfetivo(id);
+  if (atPreviewVisible) atRenderPreview();
 }
 
 function setItemParcela(id, n) {
   atItemParcela[id] = n;
+  atItemValorCobrar[id] = null; // limpa override ao trocar parcela
   const wrap = document.getElementById(`at-item-parc-wrap-${id}`);
   if (wrap) {
     wrap.querySelectorAll('button[data-n]').forEach(btn => {
@@ -2964,7 +3001,8 @@ function setItemParcela(id, n) {
 function addAtItem() {
   const id = ++atItemCounter;
   atItems.push(id);
-  atItemParcela[id] = 0; // padrão: à vista
+  atItemParcela[id] = 0;    // padrão: à vista
+  atItemValorCobrar[id] = null; // padrão: auto
   const n = atItems.length;
   const list = document.getElementById('at-items-list');
   const div = document.createElement('div');
@@ -2999,20 +3037,20 @@ function addAtItem() {
           <div class="field-label">Mão de obra</div>
           <input type="text" class="input-ios" id="at-item-servico-${id}"
             placeholder="R$ 0,00" inputmode="numeric"
-            oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+            oninput="maskMoney(this);atItemValorCobrar[${id}]=null;atCalc()" style="padding:11px 13px">
         </div>
         <div>
           <div class="field-label">Valor da Peça</div>
           <input type="text" class="input-ios" id="at-item-peca-${id}"
             placeholder="R$ 0,00" inputmode="numeric"
-            oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+            oninput="maskMoney(this);atItemValorCobrar[${id}]=null;atCalc()" style="padding:11px 13px">
         </div>
       </div>
       <div>
         <div class="field-label">Lucro desejado</div>
         <input type="text" class="input-ios" id="at-item-lucro-${id}"
           placeholder="R$ 0,00" inputmode="numeric"
-          oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+          oninput="maskMoney(this);atItemValorCobrar[${id}]=null;atCalc()" style="padding:11px 13px">
       </div>
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -3021,6 +3059,19 @@ function addAtItem() {
         </div>
         <div id="at-item-parc-wrap-${id}" style="display:flex;flex-wrap:wrap;gap:5px">${parcBtns}</div>
       </div>
+      <div style="border-top:1px solid var(--divider);padding-top:10px;display:grid;gap:8px">
+        <div>
+          <div class="field-label" style="color:var(--orange)">Valor a cobrar do cliente</div>
+          <input type="text" class="input-ios" id="at-item-cobrar-${id}"
+            placeholder="R$ 0,00" inputmode="numeric"
+            oninput="onItemCobrarInput(${id},this)"
+            style="padding:11px 13px;border-color:var(--orange);border-width:1.5px">
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-secondary)">Lucro efetivo</span>
+          <span id="at-item-lucroef-${id}" style="font-size:12px;font-weight:700;color:var(--text-secondary)">—</span>
+        </div>
+      </div>
     </div>`;
   list.appendChild(div);
 }
@@ -3028,6 +3079,7 @@ function addAtItem() {
 function removeAtItem(id) {
   atItems = atItems.filter(i => i !== id);
   delete atItemParcela[id];
+  delete atItemValorCobrar[id];
   document.getElementById(`at-item-${id}`)?.remove();
   // renumera labels
   const list = document.getElementById('at-items-list');
@@ -3055,6 +3107,7 @@ function newAtBudget() {
   atItems = [];
   atItemCounter = 0;
   atItemParcela = {};
+  atItemValorCobrar = {};
   atDisplayMode = 'total_ind';
   setAtDisplayMode('total_ind');
   const el = id => document.getElementById(id);
@@ -3093,15 +3146,6 @@ function atCalc() {
   const custo  = items.reduce((s, i) => s + i.servico + i.peca, 0);
   atCurrentAvista = avista;
 
-  // Atualiza label de parcela em cada item
-  items.forEach(item => {
-    const calc = calcItemParcelado(item);
-    const lbl = document.getElementById(`at-item-parc-lbl-${item.id}`);
-    if (lbl) {
-      lbl.textContent = (calc.n > 0 && calc.avista > 0) ? `${calc.n}x de ${fmt(calc.parc)}` : '';
-    }
-  });
-
   // Toggle de modo: visível com 2+ itens
   const modeWrap = document.getElementById('at-display-mode-wrap');
   if (modeWrap) modeWrap.style.display = items.length >= 2 ? 'block' : 'none';
@@ -3112,6 +3156,27 @@ function atCalc() {
 
   document.getElementById('at-avista-display').textContent = fmt(avista);
   document.getElementById('at-custo-display').textContent  = fmt(custo);
+
+  // Atualiza campos por item
+  items.forEach(item => {
+    // Label de parcela
+    const calc = calcItemParcelado(item);
+    const parcLbl = document.getElementById(`at-item-parc-lbl-${item.id}`);
+    if (parcLbl) {
+      parcLbl.textContent = (calc.n > 0 && calc.avista > 0) ? `${calc.n}x de ${fmt(calc.parc)}` : '';
+    }
+    // Campo "Valor a cobrar" — atualiza só se em modo auto
+    const cobrarField = document.getElementById(`at-item-cobrar-${item.id}`);
+    if (cobrarField && atItemValorCobrar[item.id] == null) {
+      const itemBase = item.servico + item.peca + item.lucro;
+      if (itemBase > 0 && document.activeElement !== cobrarField) {
+        cobrarField.value = fmt(calcSuggestedCobrar(item));
+      } else if (itemBase <= 0) {
+        cobrarField.value = '';
+      }
+    }
+    updateLucroEfetivo(item.id);
+  });
 
   if (atPreviewVisible) atRenderPreview();
 }
@@ -3249,18 +3314,24 @@ function atDrawCanvas() {
     const grandTotal  = itemsCanvas.reduce((s, i) => s + calcItemParcelado(i).total, 0);
     const colW        = W - PAD * 2;
 
-    // Calcula altura dinâmica
+    // Altura do footer fixo (sempre a mesma)
+    const FOOTER_H = (1 + 20 + 16 + 22 + 1 + 14 + 36 + 40) * S;
+    // hline + gap + features_text + gap + hline_logo + gap + logo + bottom_pad
+
+    // Calcula altura do conteúdo (deve espelhar exatamente a sequência de desenho abaixo)
     let h = 44*S;                              // top pad
-    h += 32*S + 18*S + 24*S;                  // logo + subtitle + gap
-    h += 1*S + 22*S;                           // divider + gap
-    if (cliente) h += 14*S + 14*S + 30*S + 36*S; // PARA label + gap + name + gap
-    h += 14*S + 14*S + 28*S + 20*S;           // aparelho label + gap + value + gap
+    h += 32*S + 24*S;                          // wordmark + subtitle gap
+    h += 22*S;                                 // hline + gap
+    if (cliente) { h += 28*S + 36*S; }        // PARA label+gap + nome+gap
+    h += 14*S + 14*S + 28*S + 20*S;           // aparelho: label + gap + value + gap
     h += 14*S + 14*S;                          // serviços label + gap
-    itemsCanvas.forEach(() => { h += 22*S + 18*S + 14*S; }); // nome + pay + gap per item
-    if (showTotal) { h += 1*S + 14*S + 24*S + 22*S; } // divider + total row + gap
-    h += 1*S + 20*S;                           // divider + gap
-    h += 24*S + 30*S;                          // features + gap
-    h += 1*S + 12*S + 44*S + 40*S;            // logo footer
+    itemsCanvas.forEach(item => {
+      h += 22*S;                               // nome
+      if (calcItemParcelado(item).avista > 0) h += 18*S; // pay line
+      h += 14*S;                               // gap entre itens
+    });
+    if (showTotal) { h += 14*S + 46*S; }      // hline+gap + total row+gap
+    h += FOOTER_H;
 
     const canvas = document.createElement('canvas');
     canvas.width  = W;
@@ -3308,13 +3379,11 @@ function atDrawCanvas() {
     // ── Para (cliente) ──
     if (cliente) {
       ctx.textAlign = 'center';
-      y = smallLabel('Para', y - PAD + PAD); // reuse, centered
       ctx.font = font(9, '700'); ctx.fillStyle = 'rgba(255,255,255,0.35)';
       ctx.letterSpacing = `${1.2*S}px`;
-      ctx.textAlign = 'center';
-      ctx.fillText('PARA', W/2, y);
+      ctx.fillText('PARA', W/2, y + 14*S);
       ctx.letterSpacing = '0px';
-      y += 14*S;
+      y += 28*S; // label(14) + gap(14)
       ctx.font = font(18, '800'); ctx.fillStyle = WHITE;
       ctx.fillText(cliente, W/2, y + 26*S);
       y += 36*S;
@@ -3368,9 +3437,11 @@ function atDrawCanvas() {
       y += 24*S + 22*S;
     }
 
+    // ── Footer fixo (sempre mesma posição relativa ao fim do conteúdo) ──
+    // y aqui é exatamente onde o conteúdo acabou
     hline(y, 0.10); y += 20*S;
 
-    // ── Features ──
+    // Features
     ctx.textAlign = 'left';
     const feats = ['✅  6 meses de garantia', '👨🏻‍🔧  Assistência especializada'];
     const col = colW / 2;
@@ -3378,10 +3449,10 @@ function atDrawCanvas() {
       ctx.font = font(11, '700'); ctx.fillStyle = WHITE;
       ctx.fillText(f, PAD + (i * col), y + 16*S);
     });
-    y += 30*S;
+    y += 16*S + 22*S; // texto + gap
 
-    // ── Logo footer ──
-    hline(y, 0.08); y += 12*S;
+    // Logo — desenhada no rodapé com posição fixa
+    hline(y, 0.08); y += 14*S;
     const logoImg = new Image();
     logoImg.onload = () => {
       const maxH = 36 * S, maxW = 120 * S;
