@@ -3017,7 +3017,7 @@ function atCalc() {
     const total = avista / (1 - rate);
     const parc  = total / Number(n);
     const sel   = atSelectedN === Number(n) ? 'selected' : '';
-    const lucroLiq = total - servico - peca;
+    const lucroLiq = total - custo;
     return `
       <div class="parcela-item ${sel}" onclick="atSelectN(${n})" title="Lucro: ${fmt(lucroLiq)}">
         <div class="parcela-n">${n}x</div>

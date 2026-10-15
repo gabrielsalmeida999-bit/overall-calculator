@@ -1,4 +1,4 @@
-const CACHE = 'overall-v29';
+﻿const CACHE = 'overall-v30';
 
 const ASSETS = [
   './',
@@ -9,12 +9,12 @@ const ASSETS = [
   'sw.js'
 ];
 
-// Instala, pré-cacheia e ativa imediatamente (sem esperar popup)
+// Instala, prÃ©-cacheia e ativa imediatamente (sem esperar popup)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
       .then(c => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())   // ← assume controle imediatamente
+      .then(() => self.skipWaiting())   // â† assume controle imediatamente
   );
 });
 
@@ -25,12 +25,12 @@ self.addEventListener('activate', e => {
       .then(keys => Promise.all(
         keys.filter(k => k !== CACHE).map(k => caches.delete(k))
       ))
-      .then(() => self.clients.claim())  // ← toma conta de todas as abas abertas
+      .then(() => self.clients.claim())  // â† toma conta de todas as abas abertas
   );
 });
 
-// Network First para index.html — sempre busca versão mais recente da rede
-// Cache First para assets estáticos (ícones, imagens, logo)
+// Network First para index.html â€” sempre busca versÃ£o mais recente da rede
+// Cache First para assets estÃ¡ticos (Ã­cones, imagens, logo)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
