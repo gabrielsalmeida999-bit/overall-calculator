@@ -2947,21 +2947,23 @@ function addAtItem() {
     </div>
     <input type="text" class="input-ios" id="at-item-nome-${id}"
       placeholder="Ex: Troca de tela" oninput="atCalc()" style="padding:11px 13px">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-      <div>
-        <div class="field-label">Mão de obra</div>
-        <input type="text" class="input-ios" id="at-item-servico-${id}"
-          placeholder="R$ 0,00" inputmode="numeric"
-          oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+    <div style="display:grid;gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div class="field-label">Mão de obra</div>
+          <input type="text" class="input-ios" id="at-item-servico-${id}"
+            placeholder="R$ 0,00" inputmode="numeric"
+            oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+        </div>
+        <div>
+          <div class="field-label">Valor da Peça</div>
+          <input type="text" class="input-ios" id="at-item-peca-${id}"
+            placeholder="R$ 0,00" inputmode="numeric"
+            oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+        </div>
       </div>
       <div>
-        <div class="field-label">Valor da Peça</div>
-        <input type="text" class="input-ios" id="at-item-peca-${id}"
-          placeholder="R$ 0,00" inputmode="numeric"
-          oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
-      </div>
-      <div>
-        <div class="field-label">Lucro</div>
+        <div class="field-label">Lucro desejado</div>
         <input type="text" class="input-ios" id="at-item-lucro-${id}"
           placeholder="R$ 0,00" inputmode="numeric"
           oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
