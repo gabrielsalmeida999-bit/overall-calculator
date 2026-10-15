@@ -777,6 +777,7 @@ html[data-theme="light"] .at-profit-row .lbl { color: rgba(0,0,0,0.52); }
 html[data-theme="light"] .at-profit-row .val { color: #1C1C1E; }
 html[data-theme="light"] .parcela-val { color: #1C1C1E; }
 html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--orange); }
+html[data-theme="light"] .input-ios { color: #1C1C1E; }
 </style>
 </head>
 <body>
@@ -858,28 +859,38 @@ html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--oran
     <div class="header-wordmark">Overall<span class="dot">.</span></div>
   </div>
   <div style="display:flex;align-items:center;gap:4px">
-    <button class="header-icon-btn" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Alternar tema" title="Alternar modo claro/escuro">
-      <!-- Ícone lua (modo escuro ativo) -->
-      <svg id="icon-moon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17 11.5A7.5 7.5 0 1 1 8.5 3a5.5 5.5 0 0 0 8.5 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <!-- Ícone sol (modo claro ativo) -->
-      <svg id="icon-sun" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none">
-        <circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.7"/>
-        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <!-- Celular: aba orçamento de celulares -->
+    <button class="header-icon-btn" id="main-nav-btn" onclick="switchView('main')" aria-label="Orçamento de Aparelhos" title="Orçamento de Aparelhos" style="color:var(--orange)">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5.5" y="1.5" width="9" height="17" rx="2.2" stroke="currentColor" stroke-width="1.65"/>
+        <circle cx="10" cy="15.8" r="0.85" fill="currentColor"/>
       </svg>
     </button>
+    <!-- Chave de fenda: aba assistência técnica -->
+    <button class="header-icon-btn" id="at-nav-btn" onclick="switchView('at')" aria-label="Assistência Técnica" title="Assistência Técnica">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4.5 15.5l9-9" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
+        <path d="M11.5 4.5l1.5-1.5 3.5 3.5-1.5 1.5-3.5-3.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+        <path d="M3.2 16.8l1.3-1.3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <!-- +: novo orçamento -->
     <button class="header-icon-btn" onclick="newBudget()" aria-label="Novo orçamento" title="Novo orçamento">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
-    <button class="header-icon-btn" id="at-nav-btn" onclick="switchView('at')" aria-label="Assistência Técnica" title="Assistência Técnica">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M13 3a5 5 0 0 1 0 7.07L5.5 17.57A2.5 2.5 0 0 1 2 14.07l7.5-7.5A5 5 0 0 1 13 3z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="15" cy="5" r="1.2" fill="currentColor"/>
+    <!-- Lua/Sol: alternar tema -->
+    <button class="header-icon-btn" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Alternar tema" title="Alternar modo claro/escuro">
+      <svg id="icon-moon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 11.5A7.5 7.5 0 1 1 8.5 3a5.5 5.5 0 0 0 8.5 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg id="icon-sun" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none">
+        <circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
       </svg>
     </button>
+    <!-- Relógio: histórico -->
     <button class="header-icon-btn" onclick="openHistory()" aria-label="Histórico" title="Histórico de orçamentos">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/>
@@ -985,15 +996,10 @@ html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--oran
 <div id="at-view" style="display:none">
 <main class="main">
 
-  <!-- VOLTAR -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
-    <button class="header-icon-btn" onclick="switchView('main')" style="flex-shrink:0" aria-label="Voltar">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 4L7 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <div>
-      <div style="font-size:19px;font-weight:800;letter-spacing:-0.5px">Assistência Técnica</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:1px">Calculadora de orçamento de reparos</div>
-    </div>
+  <!-- TÍTULO -->
+  <div style="margin-bottom:24px">
+    <div style="font-size:19px;font-weight:800;letter-spacing:-0.5px">Assistência Técnica</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:1px">Calculadora de orçamento de reparos</div>
   </div>
 
   <!-- DADOS DO REPARO -->
@@ -1005,20 +1011,17 @@ html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--oran
         <input type="text" class="input-ios" id="at-modelo"
           placeholder="Ex: iPhone 13 Pro" oninput="atCalc()">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <div class="field-label">Valor do Serviço</div>
-          <input type="text" class="input-ios" id="at-servico"
-            placeholder="R$ 0,00" inputmode="numeric"
-            oninput="maskMoney(this); atCalc()">
-        </div>
-        <div>
-          <div class="field-label">Valor da Peça</div>
-          <input type="text" class="input-ios" id="at-peca"
-            placeholder="R$ 0,00" inputmode="numeric"
-            oninput="maskMoney(this); atCalc()">
-        </div>
+
+      <!-- Itens do reparo (dinâmico) -->
+      <div>
+        <div class="field-label">Itens do Reparo</div>
+        <div id="at-items-list" style="display:grid;gap:10px"></div>
+        <button onclick="addAtItem()" style="margin-top:10px;display:flex;align-items:center;gap:6px;background:rgba(255,115,0,0.10);color:var(--orange);border:1px solid rgba(255,115,0,0.25);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;width:100%;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='rgba(255,115,0,0.18)'" onmouseout="this.style.background='rgba(255,115,0,0.10)'">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Adicionar Item
+        </button>
       </div>
+
       <div>
         <div class="field-label">Lucro Desejado</div>
         <input type="text" class="input-ios" id="at-lucro"
@@ -1063,11 +1066,6 @@ html[data-theme="light"] .parcela-item.selected .parcela-val { color: var(--oran
           <div class="field-label">Nome do Cliente (opcional)</div>
           <input type="text" class="input-ios" id="at-cliente"
             placeholder="Ex: João Silva" oninput="atRefreshPreview()">
-        </div>
-        <div>
-          <div class="field-label">Serviço a Realizar</div>
-          <input type="text" class="input-ios" id="at-descricao"
-            placeholder="Ex: Troca de tela" oninput="atRefreshPreview()">
         </div>
       </div>
       <div style="margin-top:18px">
@@ -2766,6 +2764,8 @@ function clearAllHistory() {
    NOVO ORÇAMENTO
    ═══════════════════════════════════════════════ */
 function newBudget() {
+  const inAt = document.getElementById('at-view')?.style.display !== 'none';
+  if (inAt) { newAtBudget(); return; }
   currentHistoryId = null;
   previewVisible = false;
   document.getElementById('preview-section').style.display = 'none';
@@ -2851,6 +2851,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setMargin(20);
   addProduct();
   syncGeradorSection();
+  addAtItem(); // primeiro item AT
 
   // Listener do modal de confirmação
   document.getElementById('confirm-action-btn').addEventListener('click', () => {
@@ -2902,29 +2903,103 @@ function showOfflineToast() {
 let atSelectedN = -1;  // -1 = nenhum, 0 = à vista, 1-12 = parcelas
 let atPreviewVisible = false;
 let atCurrentAvista = 0;
+let atItems = [];
+let atItemCounter = 0;
+
+function addAtItem() {
+  const id = ++atItemCounter;
+  atItems.push(id);
+  const n = atItems.length;
+  const list = document.getElementById('at-items-list');
+  const div = document.createElement('div');
+  div.id = `at-item-${id}`;
+  div.style.cssText = 'display:grid;gap:8px;padding:12px 14px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">Item ${n}</div>
+      ${n > 1 ? `<button onclick="removeAtItem(${id})" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:2px 6px;font-size:16px;line-height:1;border-radius:6px" title="Remover item">×</button>` : ''}
+    </div>
+    <input type="text" class="input-ios" id="at-item-nome-${id}"
+      placeholder="Ex: Troca de tela" oninput="atCalc()" style="padding:11px 13px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div>
+        <div class="field-label">Mão de obra</div>
+        <input type="text" class="input-ios" id="at-item-servico-${id}"
+          placeholder="R$ 0,00" inputmode="numeric"
+          oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+      </div>
+      <div>
+        <div class="field-label">Valor da Peça</div>
+        <input type="text" class="input-ios" id="at-item-peca-${id}"
+          placeholder="R$ 0,00" inputmode="numeric"
+          oninput="maskMoney(this);atCalc()" style="padding:11px 13px">
+      </div>
+    </div>`;
+  list.appendChild(div);
+}
+
+function removeAtItem(id) {
+  atItems = atItems.filter(i => i !== id);
+  document.getElementById(`at-item-${id}`)?.remove();
+  // renumera labels
+  const list = document.getElementById('at-items-list');
+  list.querySelectorAll('[id^="at-item-"]').forEach((el, idx) => {
+    const lbl = el.querySelector('[style*="text-transform:uppercase"]');
+    if (lbl) lbl.textContent = `Item ${idx + 1}`;
+  });
+  atCalc();
+}
+
+function getAtItems() {
+  return atItems.map(id => ({
+    id,
+    nome: (document.getElementById(`at-item-nome-${id}`)?.value || '').trim(),
+    servico: parseMoney(document.getElementById(`at-item-servico-${id}`)?.value || ''),
+    peca: parseMoney(document.getElementById(`at-item-peca-${id}`)?.value || '')
+  }));
+}
+
+function newAtBudget() {
+  atSelectedN = -1;
+  atPreviewVisible = false;
+  atCurrentAvista = 0;
+  atItems = [];
+  atItemCounter = 0;
+  const el = id => document.getElementById(id);
+  if (el('at-modelo'))  el('at-modelo').value  = '';
+  if (el('at-lucro'))   el('at-lucro').value   = '';
+  if (el('at-cliente')) el('at-cliente').value = '';
+  if (el('at-items-list')) el('at-items-list').innerHTML = '';
+  if (el('at-result'))  el('at-result').style.display = 'none';
+  if (el('at-preview-section')) el('at-preview-section').style.display = 'none';
+  addAtItem();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function switchView(view) {
   const mainView = document.getElementById('main-view');
   const atView   = document.getElementById('at-view');
   const atBtn    = document.getElementById('at-nav-btn');
+  const mainBtn  = document.getElementById('main-nav-btn');
   if (view === 'at') {
     mainView.style.display = 'none';
     atView.style.display   = 'block';
-    if (atBtn) atBtn.style.color = 'var(--orange)';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (atBtn)   atBtn.style.color   = 'var(--orange)';
+    if (mainBtn) mainBtn.style.color = '';
   } else {
     mainView.style.display = 'block';
     atView.style.display   = 'none';
-    if (atBtn) atBtn.style.color = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (atBtn)   atBtn.style.color   = '';
+    if (mainBtn) mainBtn.style.color = 'var(--orange)';
   }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function atCalc() {
-  const servico = parseMoney(document.getElementById('at-servico')?.value || '');
-  const peca    = parseMoney(document.getElementById('at-peca')?.value || '');
-  const lucro   = parseMoney(document.getElementById('at-lucro')?.value || '');
-  const avista  = servico + peca + lucro;
+  const items    = getAtItems();
+  const custo    = items.reduce((s, i) => s + i.servico + i.peca, 0);
+  const lucro    = parseMoney(document.getElementById('at-lucro')?.value || '');
+  const avista   = custo + lucro;
   atCurrentAvista = avista;
 
   const result = document.getElementById('at-result');
@@ -2933,7 +3008,7 @@ function atCalc() {
 
   // Atualiza à vista
   document.getElementById('at-avista-display').textContent = fmt(avista);
-  document.getElementById('at-custo-display').textContent   = fmt(servico + peca);
+  document.getElementById('at-custo-display').textContent   = fmt(custo);
 
   // Constrói grade de parcelas
   const grid = document.getElementById('at-parcela-grid');
@@ -2962,16 +3037,15 @@ function atSelectN(n) {
 }
 
 function atGetSelectedData() {
-  const servico = parseMoney(document.getElementById('at-servico')?.value || '');
-  const peca    = parseMoney(document.getElementById('at-peca')?.value || '');
-  const avista  = atCurrentAvista;
+  const custo  = getAtItems().reduce((s, i) => s + i.servico + i.peca, 0);
+  const avista = atCurrentAvista;
   if (atSelectedN === 0 || atSelectedN === -1) {
-    return { total: avista, parc: 0, n: 0, lucroLiq: avista - servico - peca };
+    return { total: avista, parc: 0, n: 0, lucroLiq: avista - custo };
   }
-  const rate = RATES[atSelectedN];
+  const rate  = RATES[atSelectedN];
   const total = avista / (1 - rate);
   const parc  = total / atSelectedN;
-  return { total, parc, n: atSelectedN, lucroLiq: total - servico - peca };
+  return { total, parc, n: atSelectedN, lucroLiq: total - custo };
 }
 
 function atGetPayCondText(data) {
@@ -3009,9 +3083,10 @@ function atRenderPreview() {
   const wrap    = document.getElementById('at-preview-wrap');
   const cliente = (document.getElementById('at-cliente')?.value || '').trim();
   const modelo  = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
-  const descr   = (document.getElementById('at-descricao')?.value || '').trim() || 'Reparo';
+  const items   = getAtItems().filter(i => i.nome || i.servico + i.peca > 0);
   const data    = atGetSelectedData();
   const cond    = atGetPayCondText(data);
+  const labelServicos = items.length > 1 ? 'Serviços' : 'Serviço';
 
   const html = `
     <div style="background:#000;padding:32px 28px;font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;border-radius:16px;max-width:460px;margin:0 auto">
@@ -3031,8 +3106,16 @@ function atRenderPreview() {
       <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Aparelho</div>
       <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:14px">${escHtml(modelo)}</div>
 
-      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px">Serviço</div>
-      <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,0.80);margin-bottom:20px">${escHtml(descr)}</div>
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px">${labelServicos}</div>
+      <div style="margin-bottom:20px;display:grid;gap:5px">
+        ${items.map(item => {
+          const val = item.servico + item.peca;
+          return `<div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.80)">${escHtml(item.nome || 'Reparo')}</span>
+            ${val > 0 ? `<span style="font-size:13px;color:rgba(255,255,255,0.45)">${fmt(val)}</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
 
       <div style="height:1px;background:rgba(255,255,255,0.10);margin:0 0 20px"></div>
 
@@ -3049,15 +3132,11 @@ function atRenderPreview() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="display:flex;align-items:flex-start;gap:8px">
           <span style="font-size:16px;line-height:1;margin-top:1px">✅</span>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#fff">6 meses de garantia</div>
-          </div>
+          <div><div style="font-size:12px;font-weight:700;color:#fff">6 meses de garantia</div></div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:8px">
           <span style="font-size:16px;line-height:1;margin-top:1px">👨🏻‍🔧</span>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#fff">Assistência técnica especializada</div>
-          </div>
+          <div><div style="font-size:12px;font-weight:700;color:#fff">Assistência especializada</div></div>
         </div>
       </div>
 
@@ -3117,9 +3196,10 @@ function atDrawCanvas() {
     const DIMMER = 'rgba(255,255,255,0.28)';
     const font   = (size, weight = '400') => `${weight} ${size * SCALE}px -apple-system,"SF Pro Display","Helvetica Neue",sans-serif`;
 
-    const cliente = (document.getElementById('at-cliente')?.value || '').trim();
-    const modelo  = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
-    const descr   = (document.getElementById('at-descricao')?.value || '').trim() || 'Reparo';
+    const cliente    = (document.getElementById('at-cliente')?.value || '').trim();
+    const modelo     = (document.getElementById('at-modelo')?.value || '').trim() || 'Aparelho';
+    const allItems   = getAtItems().filter(i => i.nome || i.servico + i.peca > 0);
+    const itemsCanvas = allItems.length > 0 ? allItems : [{ nome: 'Reparo', servico: 0, peca: 0 }];
     const data    = atGetSelectedData();
     const cond    = atGetPayCondText(data);
 
@@ -3129,12 +3209,13 @@ function atDrawCanvas() {
     // Calculate height
     let h = 48*S;                          // top pad
     h += 36*S;                             // logo
-    h += 16*S;                             // subtitle (taller)
+    h += 16*S;                             // subtitle
     h += 28*S;                             // gap after subtitle
     h += 24*S;                             // divider + gap
     if (cliente) { h += 14*S + 18*S + 26*S + 40*S; } // PARA label + gap + name + gap
     h += 16*S + 36*S;                      // aparelho label + value
-    h += 16*S + 18*S + 24*S;              // servico label + value + gap
+    h += 16*S;                             // serviços label
+    h += itemsCanvas.length * 22*S + 24*S; // items rows + gap
     h += 24*S;                             // divider before valor
     h += 22*S + 60*S + 28*S + 28*S;       // valor label + big price + condition text + divider
     h += 48*S;                             // features row
@@ -3222,12 +3303,24 @@ function atDrawCanvas() {
     ctx.font = font(15, '700'); ctx.fillStyle = WHITE;
     ctx.fillText(modelo, PAD, y + 22*S); y += 36*S;
 
-    // ── Serviço ──
-    y = label('Serviço', y);
-    const descrLines = measureTextWrap(descr, colW, font(13, '500'));
-    ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.75)';
-    descrLines.forEach((line, i) => { ctx.fillText(line, PAD, y + (i+1)*18*S); });
-    y += descrLines.length * 18*S + 24*S;
+    // ── Serviço(s) ──
+    const labelServicos = itemsCanvas.length > 1 ? 'Serviços' : 'Serviço';
+    y = label(labelServicos, y);
+    itemsCanvas.forEach((item, i) => {
+      const nome   = item.nome || 'Reparo';
+      const val    = item.servico + item.peca;
+      const lineY  = y + (i + 1) * 22*S;
+      ctx.font = font(13, '500'); ctx.fillStyle = 'rgba(255,255,255,0.80)';
+      ctx.textAlign = 'left';
+      ctx.fillText(nome, PAD, lineY);
+      if (val > 0) {
+        ctx.font = font(12, '400'); ctx.fillStyle = 'rgba(255,255,255,0.40)';
+        ctx.textAlign = 'right';
+        ctx.fillText(fmt(val), W - PAD, lineY);
+      }
+    });
+    ctx.textAlign = 'left';
+    y += itemsCanvas.length * 22*S + 24*S;
 
     hline(y, 0.10); y += 22*S;
 
