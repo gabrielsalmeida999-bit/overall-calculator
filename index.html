@@ -1104,7 +1104,8 @@ let currentMargin    = 20;
 let useCustomMargin  = false;
 let productIdCounter = 0;
 let previewVisible   = false;
-let currentHistoryId = null; // null = novo orçamento; string = editando existente
+let currentHistoryId   = null; // null = novo orçamento; string = editando existente
+let currentAtHistoryId = null; // idem para orçamentos de AT
 
 const SHIPPING = 70;
 // Taxas reais da maquininha
@@ -2465,6 +2466,33 @@ function saveToHistory() {
   saveHistoryArr(history);
 }
 
+function saveAtToHistory() {
+  const cliente = (document.getElementById('at-cliente')?.value || '').trim();
+  const modelo  = (document.getElementById('at-modelo')?.value  || '').trim() || 'Aparelho';
+  const snapshot = {
+    id:          currentAtHistoryId || Date.now().toString(),
+    savedAt:     Date.now(),
+    type:        'at',
+    clientName:  cliente || modelo,
+    cliente,
+    modelo,
+    displayMode: atDisplayMode,
+    items: getAtItems().map(item => ({
+      nome:        item.nome,
+      servico:     item.servico,
+      peca:        item.peca,
+      lucro:       item.lucro,
+      parcN:       item.parcN,
+      valorCobrar: atItemValorCobrar[item.id] ?? null,
+    })),
+  };
+  currentAtHistoryId = snapshot.id;
+  const history = loadHistory().filter(h => h.id !== snapshot.id);
+  history.unshift(snapshot);
+  if (history.length > 100) history.splice(100);
+  saveHistoryArr(history);
+}
+
 /* ═══════════════════════════════════════════════
    HISTÓRICO — RENDER
    ═══════════════════════════════════════════════ */
@@ -2499,20 +2527,29 @@ function renderHistory() {
   }
 
   wrap.innerHTML = items.map((item, idx) => {
-    const initials = getInitials(item.clientName);
-    const prodCount = item.products?.length || 0;
-    const prodLabel = prodCount === 1 ? '1 produto' : `${prodCount} produtos`;
+    const isAt    = item.type === 'at';
+    const initials = isAt ? 'AT' : getInitials(item.clientName);
+    let metaLabel;
+    if (isAt) {
+      const svcCount = item.items?.length || 0;
+      metaLabel = svcCount === 1 ? '1 serviço' : `${svcCount} serviços`;
+    } else {
+      const prodCount = item.products?.length || 0;
+      metaLabel = prodCount === 1 ? '1 produto' : `${prodCount} produtos`;
+    }
+    const onclk = isAt ? `loadAtBudget('${item.id}')` : `loadBudget('${item.id}')`;
+    const avatarStyle = isAt ? ' style="background:rgba(255,115,0,0.18);color:var(--orange)"' : '';
     return `
       <div class="history-item" id="hi-${item.id}" data-id="${item.id}"
            style="animation-delay:${idx * 0.04}s">
         <div class="history-delete-btn" onclick="deleteHistoryItem('${item.id}')">
           <span>🗑️</span><small>Apagar</small>
         </div>
-        <div class="history-item-inner" onclick="loadBudget('${item.id}')">
-          <div class="history-item-avatar">${initials}</div>
+        <div class="history-item-inner" onclick="${onclk}">
+          <div class="history-item-avatar"${avatarStyle}>${initials}</div>
           <div class="history-item-info">
             <div class="history-item-name">${escHtml(item.clientName)}</div>
-            <div class="history-item-meta">${prodLabel} &middot; ${fmtDate(item.savedAt)}</div>
+            <div class="history-item-meta">${metaLabel} &middot; ${fmtDate(item.savedAt)}</div>
           </div>
           <div class="history-item-chevron">›</div>
         </div>
@@ -2707,6 +2744,70 @@ function loadBudget(id) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function loadAtBudget(id) {
+  const history  = loadHistory();
+  const snapshot = history.find(h => h.id === id);
+  if (!snapshot || snapshot.type !== 'at') return;
+
+  // 1. Mudar para view AT
+  switchView('at');
+
+  // 2. Reset completo
+  atPreviewVisible  = false;
+  atCurrentAvista   = 0;
+  atItems           = [];
+  atItemCounter     = 0;
+  atItemParcela     = {};
+  atItemValorCobrar = {};
+  atDisplayMode     = 'total_ind';
+  const el = i => document.getElementById(i);
+  if (el('at-items-list'))      el('at-items-list').innerHTML      = '';
+  if (el('at-result'))          el('at-result').style.display      = 'none';
+  if (el('at-preview-section')) el('at-preview-section').style.display = 'none';
+  if (el('at-display-mode-wrap')) el('at-display-mode-wrap').style.display = 'none';
+
+  // 3. Restaurar campos globais
+  if (el('at-modelo'))  el('at-modelo').value  = snapshot.modelo  || '';
+  if (el('at-cliente')) el('at-cliente').value = snapshot.cliente || '';
+
+  // 4. Restaurar itens
+  (snapshot.items || []).forEach(saved => {
+    addAtItem();
+    const newId = atItems[atItems.length - 1];
+
+    const nomeEl = el(`at-item-nome-${newId}`);
+    if (nomeEl) nomeEl.value = saved.nome || '';
+
+    const servicoEl = el(`at-item-servico-${newId}`);
+    if (servicoEl && saved.servico > 0) setMaskedValue(servicoEl, saved.servico);
+
+    const pecaEl = el(`at-item-peca-${newId}`);
+    if (pecaEl && saved.peca > 0) setMaskedValue(pecaEl, saved.peca);
+
+    const lucroEl = el(`at-item-lucro-${newId}`);
+    if (lucroEl && saved.lucro > 0) setMaskedValue(lucroEl, saved.lucro);
+
+    if (saved.parcN > 0) setItemParcela(newId, saved.parcN);
+
+    if (saved.valorCobrar != null && saved.valorCobrar > 0) {
+      atItemValorCobrar[newId] = saved.valorCobrar;
+      const cobrarEl = el(`at-item-cobrar-${newId}`);
+      if (cobrarEl) setMaskedValue(cobrarEl, saved.valorCobrar);
+    }
+  });
+
+  // 5. Restaurar modo de exibição
+  setAtDisplayMode(snapshot.displayMode || 'total_ind');
+
+  // 6. Marcar como orçamento existente
+  currentAtHistoryId = snapshot.id;
+
+  // 7. Calcular, fechar painel e rolar ao topo
+  atCalc();
+  closeHistory();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 /* ═══════════════════════════════════════════════
    HISTÓRICO — EXCLUIR / LIMPAR
    ═══════════════════════════════════════════════ */
@@ -2727,7 +2828,8 @@ function deleteHistoryItem(id) {
         setTimeout(() => { el.remove(); checkHistoryEmpty(); }, 220);
       }
       // Se era o orçamento atual, libera o id
-      if (currentHistoryId === id) currentHistoryId = null;
+      if (currentHistoryId   === id) currentHistoryId   = null;
+      if (currentAtHistoryId === id) currentAtHistoryId = null;
     }
   );
 }
@@ -2753,7 +2855,8 @@ function clearAllHistory() {
     'Apagar tudo',
     () => {
       saveHistoryArr([]);
-      currentHistoryId = null;
+      currentHistoryId   = null;
+      currentAtHistoryId = null;
       renderHistory();
     }
   );
@@ -3102,13 +3205,14 @@ function getAtItems() {
 }
 
 function newAtBudget() {
-  atPreviewVisible = false;
-  atCurrentAvista = 0;
-  atItems = [];
-  atItemCounter = 0;
-  atItemParcela = {};
+  atPreviewVisible  = false;
+  atCurrentAvista   = 0;
+  atItems           = [];
+  atItemCounter     = 0;
+  atItemParcela     = {};
   atItemValorCobrar = {};
-  atDisplayMode = 'total_ind';
+  atDisplayMode     = 'total_ind';
+  currentAtHistoryId = null;
   setAtDisplayMode('total_ind');
   const el = id => document.getElementById(id);
   if (el('at-modelo'))  el('at-modelo').value  = '';
@@ -3263,6 +3367,7 @@ function atRenderPreview() {
 
 function atGenerateImage() {
   if (atCurrentAvista <= 0) return;
+  saveAtToHistory();
   atPreviewVisible = true;
   atRenderPreview();
   const sec = document.getElementById('at-preview-section');
